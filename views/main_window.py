@@ -3,16 +3,23 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QGridLayout, QFileDialog
 
+from utils.config_manager import ConfigManager
+from utils.constants import TEST_FILES_DIR
 from utils.window_utils import center_window
+from views.configs_window import ConfigWindow
 
 
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
+        self.config = ConfigManager()
 
         self.setWindowTitle("CEBRA IT8700")
         self.setFixedSize(QSize(400, 400))
         center_window(self)
+
+        self.config_window = ConfigWindow(self)
+        self.test_window = None
 
         # LOGO
         self.logo = QLabel()
@@ -57,10 +64,11 @@ class MainWindow(QWidget):
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Open Test File...",
-            "",
+            self.config.get(TEST_FILES_DIR),
             "YAML Files (*.yaml)",
         )
         return file_path or None
+
 
     def show_window(self, window_id: int) -> None:
         """
@@ -75,5 +83,6 @@ class MainWindow(QWidget):
             case 0:
                 print("Janela A")
             case 3:
-                print("Janela B")
+                self.hide()
+                self.config_window.show()
 
