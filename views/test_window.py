@@ -22,7 +22,7 @@ class TestWindow(QWidget):
 
         self.tabs = QTabWidget()
         self.test_run_tab = QWidget()
-        self.test_steps_tab = StepsTabView(self.test_data.steps)
+        self.test_steps_tab = StepsTabView(self.test_data)
 
         self.tabs.addTab(self.test_run_tab, "RUN")
         self.tabs.addTab(self.test_steps_tab, "STEPS")
