@@ -4,10 +4,11 @@ from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QTabWid
 
 from models.test_file_model import TestData
 from views.steps_tab_view import StepsTabView
+from views.test_run_tab_view import TestRunTabView
 
 
 class TestWindow(QWidget):
-    def __init__(self, test_data:TestData, parent: QWidget):
+    def __init__(self, test_data: TestData, parent: QWidget):
         super().__init__()
         self.test_data = test_data
         self.parent_window = parent
@@ -21,7 +22,7 @@ class TestWindow(QWidget):
         self.logo.setFixedSize(QSize(150, 70))
 
         self.tabs = QTabWidget()
-        self.test_run_tab = QWidget()
+        self.test_run_tab = TestRunTabView()
         self.test_steps_tab = StepsTabView(self.test_data)
 
         self.tabs.addTab(self.test_run_tab, "RUN")

@@ -51,10 +51,11 @@ class StepsTabView(QWidget):
                 step_type = "Automatic Short"
         self.step_type_label.setText(step_type)
         self.step_duration_label.setText(f"{step.duration} s")
-        self.step_input_source_label.setText(f"{self.test_data.input_sources[step.input_source]} V{self.test_data.input_type.lower()}")
+        self.step_input_source_label.setText(
+            f"{self.test_data.input_sources[step.input_source]} V{self.test_data.input_type.lower()}")
         self.setup_channels_groupbox(step)
 
-    def setup_channels_groupbox(self, step:Step):
+    def setup_channels_groupbox(self, step: Step):
         self.clear_channels_group_layout()
         for channel, param in step.channel_params.items():
             params = next((param_item for param_item in self.test_data.params if param_item.id == param), None)
@@ -90,3 +91,4 @@ class StepsTabView(QWidget):
         step_item.setSizeHint(step_item_widget.sizeHint())
         self.step_list_view.addItem(step_item)
         self.step_list_view.setItemWidget(step_item, step_item_widget)
+
