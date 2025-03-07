@@ -3,10 +3,12 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QGridLayout, QFileDialog
 
+from models.test_file_model import TestData
 from utils.config_manager import ConfigManager
 from utils.constants import TEST_FILES_DIR
 from utils.window_utils import center_window
 from views.configs_window import ConfigWindow
+from views.test_window import TestWindow
 
 
 class MainWindow(QWidget):
@@ -81,7 +83,14 @@ class MainWindow(QWidget):
         """
         match window_id:
             case 0:
-                print("Janela A")
+                file_path = self.show_file_load_dialog()
+                if file_path:
+                    with open(file_path, "r", encoding="utf-8") as file:
+                        data = yaml.safe_load(file)
+                    test_data = TestData(**data)
+                    self.hide()
+                    self.test_window = TestWindow(test_data, self)
+                    self.test_window.showMaximized()
             case 3:
                 self.hide()
                 self.config_window.show()
