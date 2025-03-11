@@ -22,7 +22,7 @@ class TestWindow(QWidget):
         self.logo.setFixedSize(QSize(150, 70))
 
         self.tabs = QTabWidget()
-        self.test_run_tab = TestRunTabView()
+        self.test_run_tab = TestRunTabView(self.test_data)
         self.test_steps_tab = StepsTabView(self.test_data)
 
         self.tabs.addTab(self.test_run_tab, "RUN")
