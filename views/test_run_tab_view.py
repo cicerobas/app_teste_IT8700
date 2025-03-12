@@ -1,14 +1,45 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIntValidator, QIcon
-from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QGroupBox, QLineEdit, QFormLayout, QPushButton, QLabel
+from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QGroupBox, QLineEdit, QFormLayout, QPushButton, QLabel, \
+    QGridLayout
 
 from models.test_file_model import TestData
 
+class ChannelMonitorView(QGroupBox):
+    def __init__(self, channel_id:int):
+        super().__init__()
+        self.channel_id = channel_id
+        self.setTitle(f"Channel {self.channel_id}")
+        self.setFixedSize(QSize(250, 150))
+
+        self.voltage_label = QLabel("0 V")
+        self.current_label = QLabel("0 A")
+        self.power_label = QLabel("0 W")
+
+        g_monitor_layout = QGridLayout()
+        g_monitor_layout.addWidget(self.voltage_label, 0, 0, 2, 1)
+        g_monitor_layout.addWidget(self.current_label, 0, 1, 1, 1)
+        g_monitor_layout.addWidget(self.power_label, 1, 1, 1, 1)
+
+        self.setLayout(g_monitor_layout)
+
+    def set_voltage(self, voltage: float):
+        self.voltage_label.setText(f"{'%.2f' % voltage} V")
+        self.update_power()
+
+    def set_current(self, current: float):
+        self.current_label.setText(f"{'%.2f' % current} A")
+        self.update_power()
+
+    def update_power(self):
+        power = float(self.voltage_label.text()) * float(self.current_label.text())
+        self.power_label.setText(f"{'%.2f' % power} W")
 
 class TestRunTabView(QWidget):
     def __init__(self, test_data: TestData):
         super().__init__()
         self.test_data: TestData = test_data
+        self.channel_list:list[ChannelMonitorView] = []
 
         test_setup_groupbox = QGroupBox("SETUP")
         test_setup_groupbox.setMaximumWidth(300)
@@ -49,13 +80,21 @@ class TestRunTabView(QWidget):
 
         # LEFT PANEL
         v_left_panel_layout = QVBoxLayout()
-        v_left_panel_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         v_left_panel_layout.addWidget(test_setup_groupbox)
         v_left_panel_layout.addWidget(action_buttons_groupbox)
         v_left_panel_layout.addWidget(test_info_groupbox)
 
+        # RIGHT PANEL
+        v_right_panel_layout = QVBoxLayout()
+        for channel_id in self.test_data.channels.keys():
+            self.channel_list.append(ChannelMonitorView(channel_id))
+
+        for channel in self.channel_list:
+            v_right_panel_layout.addWidget(channel)
+
         # MAIN LAYOUT
         h_main_layout = QHBoxLayout()
-        h_main_layout.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        h_main_layout.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignTop)
         h_main_layout.addLayout(v_left_panel_layout)
+        h_main_layout.addLayout(v_right_panel_layout)
         self.setLayout(h_main_layout)
