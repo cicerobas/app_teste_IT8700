@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="555fd9b4-b0fb-4e5e-a58c-0fd6716abb63" name="Changes" comment="-">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/views/test_run_tab_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/test_run_tab_view.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,16 +44,16 @@
     <option name="showExcludedFiles" value="false" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.ex.executor": "Run",
-    "Python.main.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "feat/channel__monitor__layout",
-    "last_opened_file_path": "/home/cebra/PycharmProjects/app_teste_IT8700/views"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.ex.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feat/channel__monitor__layout&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/cebra/PycharmProjects/app_teste_IT8700/views&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/views" />
@@ -67,7 +66,7 @@
       <recent name="$PROJECT_DIR$/assets/icons" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.ex">
+  <component name="RunManager" selected="Python.main">
     <configuration name="ex" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="app_teste_IT8700" />
       <option name="ENV_FILES" value="" />
@@ -114,8 +113,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.ex" />
         <item itemvalue="Python.main" />
+        <item itemvalue="Python.ex" />
       </list>
     </recent_temporary>
   </component>
