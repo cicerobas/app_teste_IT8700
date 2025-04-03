@@ -15,19 +15,22 @@ class TestWindow(QWidget):
 
         self.setWindowTitle("CEBRA IT8700")
 
-        # LOGO
+        # Components
+        ## Logo
         self.logo = QLabel()
         self.logo.setPixmap(QPixmap("assets/logo.png"))
         self.logo.setScaledContents(True)
         self.logo.setFixedSize(QSize(150, 70))
-
+        ## Tabs
         self.tabs = QTabWidget()
         self.test_run_tab = TestRunTabView(self.test_data)
         self.test_steps_tab = StepsTabView(self.test_data)
-
         self.tabs.addTab(self.test_run_tab, "RUN")
-        self.tabs.addTab(self.test_steps_tab, "STEPS")
+        #self.tabs.addTab(self.test_steps_tab, "STEPS")
 
+        self.setLayout(self.__setup_layout())
+
+    def __setup_layout(self) -> QVBoxLayout:
         v_main_layout = QVBoxLayout()
         v_main_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
@@ -37,7 +40,7 @@ class TestWindow(QWidget):
         # v_main_layout.addLayout(h_header_layout)
         v_main_layout.addSpacing(10)
         v_main_layout.addWidget(self.tabs)
-        self.setLayout(v_main_layout)
+        return v_main_layout
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self.parent_window.show()
