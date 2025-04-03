@@ -2,6 +2,7 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QCloseEvent, QPixmap
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QTabWidget
 
+from controllers.test_controller import TestController
 from models.test_file_model import TestData
 from views.steps_tab_view import StepsTabView
 from views.test_run_tab_view import TestRunTabView
@@ -12,7 +13,7 @@ class TestWindow(QWidget):
         super().__init__()
         self.test_data = test_data
         self.parent_window = parent
-
+        self.test_controller = TestController(self.test_data)
         self.setWindowTitle("CEBRA IT8700")
 
         # Components
@@ -23,10 +24,10 @@ class TestWindow(QWidget):
         self.logo.setFixedSize(QSize(150, 70))
         ## Tabs
         self.tabs = QTabWidget()
-        self.test_run_tab = TestRunTabView(self.test_data)
+        self.test_run_tab = TestRunTabView(self.test_data, self.test_controller)
         self.test_steps_tab = StepsTabView(self.test_data)
         self.tabs.addTab(self.test_run_tab, "RUN")
-        #self.tabs.addTab(self.test_steps_tab, "STEPS")
+        # self.tabs.addTab(self.test_steps_tab, "STEPS")
 
         self.setLayout(self.__setup_layout())
 
@@ -43,5 +44,7 @@ class TestWindow(QWidget):
         return v_main_layout
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        if self.test_controller.monitoring_worker is not None:
+            self.test_controller.monitoring_worker.stop()
         self.parent_window.show()
         event.accept()

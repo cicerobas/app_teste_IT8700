@@ -3,16 +3,17 @@ from PySide6.QtGui import QIntValidator, QIcon
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QGroupBox, QLineEdit, QFormLayout, QPushButton, \
     QGridLayout, QLabel
 
+from controllers.test_controller import TestController
 from models.test_file_model import TestData
 from views.channel_monitor_view import ChannelMonitorView
 
 ICON_SIZE = QSize(20,20)
 
 class TestRunTabView(QWidget):
-    def __init__(self, test_data: TestData):
+    def __init__(self, test_data: TestData, test_controller:TestController):
         super().__init__()
         self.test_data: TestData = test_data
-        self.channel_list: list[ChannelMonitorView] = []
+        self.test_controller = test_controller
 
         # Components
         self.serial_number_field = QLineEdit()
@@ -30,7 +31,7 @@ class TestRunTabView(QWidget):
         for channel_id in self.test_data.channels.keys():
             channel_monitor = ChannelMonitorView(channel_id)
             channel_monitor.setProperty("class", "channel_monitor")
-            self.channel_list.append(channel_monitor)
+            self.test_controller.channel_list.append(channel_monitor)
 
         self.setLayout(self.__setup_layout())
 
@@ -77,7 +78,7 @@ class TestRunTabView(QWidget):
         g_right_panel_layout.setSpacing(20)
         g_right_panel_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
         column = 2
-        for i, channel in enumerate(self.channel_list):
+        for i, channel in enumerate(self.test_controller.channel_list):
             g_right_panel_layout.addWidget(channel, i // column, i % column)
 
         # MAIN LAYOUT

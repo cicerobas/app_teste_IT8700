@@ -12,7 +12,7 @@ class ChannelMonitorView(QGroupBox):
 
         # Values
         self.__voltage: float = 0
-        self.__current: float = 0
+        self.__current: float = 1
         self.__power: float = 0
 
         # Components
@@ -25,15 +25,17 @@ class ChannelMonitorView(QGroupBox):
 
         self.setLayout(self.__setup_layout())
 
-    def set_values(self, values: tuple[float, float]) -> None:
+    def set_values(self, values: tuple[float | None, float | None]) -> None:
         """
-        Updates channel monitor values.
+        Updates channel monitor values. If a value is None, the previous value is maintained.
         :param values: tuple (voltage, current)
         :return: None
         """
-        self.__voltage = values[0]
-        self.__current = values[1]
-        self.__power = values[0] * values[1]
+        voltage, current = values
+
+        self.__voltage = voltage if voltage is not None else self.__voltage
+        self.__current = current if current is not None else self.__current
+        self.__power = self.__voltage * self.__current
         self.__update_displays()
 
     def get_values(self) -> dict[str, float]:
