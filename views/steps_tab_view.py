@@ -10,6 +10,7 @@ class StepsTabView(QWidget):
         super().__init__()
         self.test_data: TestData = test_data
 
+
         self.step_list_view = QListWidget()
         self.step_list_view.setMaximumWidth(500)
         self.step_list_view.currentRowChanged.connect(self.setup_step_details)

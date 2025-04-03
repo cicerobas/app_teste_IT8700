@@ -34,7 +34,7 @@ class TestWindow(QWidget):
         h_header_layout = QHBoxLayout()
         h_header_layout.addWidget(self.logo, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        v_main_layout.addLayout(h_header_layout)
+        # v_main_layout.addLayout(h_header_layout)
         v_main_layout.addSpacing(10)
         v_main_layout.addWidget(self.tabs)
         self.setLayout(v_main_layout)

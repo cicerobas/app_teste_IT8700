@@ -1,0 +1,68 @@
+/** #4C5D6D */
+* {
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 16px;
+}
+
+QPushButton {
+  background-color: #4c5d6d;
+  color: white;
+  border-radius: 5px;
+  padding: 5px 10px;
+}
+QPushButton:hover {
+  background-color: #2980b9;
+}
+QPushButton:pressed {
+  background-color: #1c5986;
+}
+
+QLineEdit {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 5px;
+  background-color: #ffffff;
+}
+QLineEdit:focus {
+  border: 1px solid #3498db;
+}
+
+.channel_monitor {
+  border: 2px solid gray;
+  border-radius: 5px;
+  font-size: 20px;
+  padding-top: 20px;
+}
+.channel_monitor::title {
+  left: 10px;
+  top: 5px;
+}
+
+.channel_monitor > QLabel {
+  font-size: 30px;
+  font-weight: bold;
+  border: 2px solid grey;
+}
+
+.channel_monitor #voltage_label {
+  font-size: 40px;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+.channel_monitor #current_label {
+  border-top-right-radius: 8px;
+}
+.channel_monitor #power_label {
+  border-bottom-right-radius: 8px;
+}
+
+.left_panel_gb {
+  border: 2px solid gray;
+  border-radius: 5px;
+  font-size: 20px;
+  padding-top: 30px;
+}
+.left_panel_gb::title {
+  left: 10px;
+  top: 5px;
+}
