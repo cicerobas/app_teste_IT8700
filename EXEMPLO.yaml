@@ -1,0 +1,41 @@
+group: EXEMPLO
+model: TESTE
+customer: Cebra
+input_type: CC
+input_sources:
+- 18
+- 24
+- 32
+channels:
+  3: VC +5
+  4: VD +5
+params:
+- id: 1
+  tag: CMAX
+  va: 5.0
+  vb: 5.25
+  ia: 0.8
+  ib: 0.0
+- id: 2
+  tag: CMIN
+  va: 5.0
+  vb: 5.25
+  ia: 0.0
+  ib: 0.0
+steps:
+- id: 1
+  step_type: 1
+  description: CARGA MINIMA
+  duration: 3.0
+  input_source: 0
+  channel_params:
+    3: 1
+    4: 1
+- id: 2
+  step_type: 1
+  description: CARGA MINIMA
+  duration: 5.0
+  input_source: 0
+  channel_params:
+    3: 2
+    4: 2
