@@ -12,7 +12,7 @@ class ChannelMonitorView(QGroupBox):
 
         # Values
         self.__voltage: float = 0
-        self.__current: float = 1
+        self.__current: float = 0
         self.__power: float = 0
 
         # Components

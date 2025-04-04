@@ -58,6 +58,7 @@ class ElectronicLoadController:
         """
         if self.active_channel == channel_id:
             return
+
         self.active_channel = channel_id
         self.__sat_write(f"{SELECT_CHANNEL}{channel_id}")
 
@@ -68,16 +69,22 @@ class ElectronicLoadController:
         :param state: Bool to the desired state: ON/OFF.
         :return: None.
         """
+        if not self.conn_status:
+            return
+
         for channel in channels:
             self.__select_channel(channel)
             self.__sat_write(INPUT_ON if state else INPUT_OFF)
 
-    def get_channel_value(self, channel_id: int) -> str:
+    def get_channel_value(self, channel_id: int) -> str | None:
         """
         Query the instrument channel for the current voltage reading.
         :param channel_id: Channel to be read.
         :return: Instrument response for the channel.
         """
+        if not self.conn_status:
+            return None
+
         self.__select_channel(channel_id)
         return self.__sat_query(FETCH_VOLT)
 
@@ -88,6 +95,9 @@ class ElectronicLoadController:
         :param load: Current (Amps) to be set.
         :return: None.
         """
+        if not self.conn_status:
+            return
+
         self.__select_channel(channel_id)
         self.__sat_write(f"{SET_CURR}{load}")
         sleep(0.1)
@@ -99,6 +109,9 @@ class ElectronicLoadController:
         :param state: Bool to represent the SHORT mode on/off.
         :return: None.
         """
+        if not self.conn_status:
+            return
+
         self.__select_channel(channel_id)
         self.__sat_write(SHORT_ON if state else SHORT_OFF)
 
@@ -107,4 +120,7 @@ class ElectronicLoadController:
         Sends the 'RESET' command to the instrument.
         :return: None.
         """
+        if not self.conn_status:
+            return
+
         self.__sat_write(RESET)

@@ -18,7 +18,7 @@ class MonitorWorker(QRunnable):
             while self.paused:
                 self.wait_condition.wait(
                     self.mutex
-                )  # Pausa até que seja sinalizado para continuar
+                )
             self.mutex.unlock()
 
             self.signals.update_output.emit()
@@ -31,10 +31,10 @@ class MonitorWorker(QRunnable):
     def resume(self):
         with QMutexLocker(self.mutex):
             self.paused = False
-            self.wait_condition.wakeAll()  # Notifica a thread para continuar
+            self.wait_condition.wakeAll()
 
     def stop(self):
         with QMutexLocker(self.mutex):
             self.running = False
             self.paused = False
-            self.wait_condition.wakeAll()  # Garante que a thread saia do estado de pausa
+            self.wait_condition.wakeAll()
