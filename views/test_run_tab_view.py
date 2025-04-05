@@ -33,6 +33,7 @@ class TestRunTabView(QWidget):
         self.run_button.clicked.connect(self.test_controller.start_test_sequence)
         self.stop_button.clicked.connect(self.test_controller.cancel_test_sequence)
         self.serial_number_field.textChanged.connect(self.__set_serial_number)
+        self.tester_id_field.textChanged.connect(self.__set_tester_id)
         self.test_controller.state_changed.connect(self.__update_status_label)
         self.test_controller.serial_number_updated.connect(self.__update_serial_number_field)
         self.test_controller.current_step_changed.connect(self.__set_step_info)
@@ -54,6 +55,10 @@ class TestRunTabView(QWidget):
         self.current_step_label.setText(f"STEP: {description}")
         self.timer_label.setText(f"{duration}s")
         self.steps_progress_label.setText(f"{index + 1}/{len(self.test_data.steps)}")
+
+    @Slot(str)
+    def __set_tester_id(self, value):
+        self.test_controller.tester_id = value
 
     @Slot(str)
     def __set_serial_number(self, value):

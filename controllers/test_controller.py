@@ -1,3 +1,4 @@
+import os
 from enum import Enum
 from time import sleep
 
@@ -7,8 +8,11 @@ from PySide6.QtWidgets import QMessageBox
 from controllers.arduino_controller import ArduinoController
 from controllers.electronic_load_controller import ElectronicLoadController
 from models.test_file_model import TestData, Step
+from utils.config_manager import ConfigManager
+from utils.constants import TEST_FILES_DIR
 from utils.delay_manager import DelayManager
 from utils.monitor_worker import MonitorWorker
+from utils.report_file_util import generate_report_file
 from views.channel_monitor_view import ChannelMonitorView
 
 
@@ -53,10 +57,15 @@ class TestController(QObject):
         self.channel_list: list[ChannelMonitorView] = []
         self.state: TestState = TestState.NONE
         self.serial_number: str = ""
+        self.tester_id: str = ""
         self.is_single_step_test: bool = False
         self.current_step_index: int = 0
+        self.test_result_data = dict()
+        self.test_sequence_status: list[bool] = []
+        self.temp_data_file = None
 
         # Instances
+        self.config = ConfigManager()
         self.electronic_load_controller = ElectronicLoadController()
         self.arduino_controller = ArduinoController()
         self.worker_signals = WorkerSignals()
@@ -78,8 +87,8 @@ class TestController(QObject):
             return
 
         print("START")
-        if not self.__check_instruments():
-            return
+        # if not self.__check_instruments():
+        #     return
 
         if self.serial_number == "":
             self.__update_serial_number(False)
@@ -90,11 +99,19 @@ class TestController(QObject):
         self.__update_state(TestState.RUNNING)
         if not self.is_single_step_test:
             self.current_step_index = 0
+            self.test_result_data.update(
+                group=self.test_data.group,
+                model=self.test_data.model,
+                customer=self.test_data.customer,
+                tester_id=self.tester_id,
+                serial_number=self.serial_number,
+                steps_result=[]
+            )
 
         self.electronic_load_controller.toggle_active_channels_input(
             [key for key in self.test_data.channels.keys()], True)
 
-        self.run_steps()
+        self.__run_steps()
 
     @Slot(int)
     def setup_single_run(self, step_index):
@@ -107,7 +124,47 @@ class TestController(QObject):
         self.current_step_index = step_index
         self.start_test_sequence()
 
-    def run_steps(self):
+    @Slot()
+    def toggle_test_pause_state(self):
+        """
+        Toggle the current state between RUNNING and PAUSED.
+        :return:
+        """
+        if self.state not in [TestState.RUNNING, TestState.PAUSED]:
+            return
+        self.delay_manager.pause_resume()
+        self.__update_state(TestState.RUNNING if self.state is TestState.PAUSED else TestState.PAUSED)
+
+    @Slot()
+    def cancel_test_sequence(self):
+        """
+        Cancels the current test sequence.
+        :return: None.
+        """
+        if self.state not in [TestState.RUNNING, TestState.PAUSED, TestState.WAITKEY]:
+            return
+        print("CANCEL")
+        self.__update_state(TestState.CANCELED)
+        self.__reset_setup()
+
+    @Slot()
+    def __on_delay_completed(self):
+        if self.state is not TestState.CANCELED:
+            self.__validate_step_values()
+            self.current_step_index += 1
+            self.__run_steps()
+
+    @Slot()
+    def __update_output_display(self):
+        """
+        Updates the channel displays (voltage) in a dedicated thread.
+        :return: None.
+        """
+        for channel in self.channel_list:
+            voltage_value = self.electronic_load_controller.get_channel_value(channel.channel_id)
+            channel.set_values((float(voltage_value), None))
+
+    def __run_steps(self):
         sleep(1)
         if self.is_single_step_test:
             steps = [self.test_data.steps[self.current_step_index]]
@@ -142,10 +199,30 @@ class TestController(QObject):
         else:
             self.electronic_load_controller.toggle_active_channels_input(
                 [key for key in self.test_data.channels.keys()], False)
-            self.__update_state(TestState.PASSED)
-            print("DONE")
+            if self.temp_data_file:
+                self.temp_data_file.close()
+                os.remove(self.temp_data_file.name)
 
-    def validate_step_values(self):
+            if self.state is not TestState.CANCELED:
+                self.__update_state(TestState.FAILED if False in self.test_sequence_status else TestState.PASSED)
+
+            self.temp_data_file = generate_report_file(self.test_result_data)
+
+            # if self.state is TestState.PASSED and not self.is_single_step_test:
+            if not self.is_single_step_test:  # TESTE
+                with open(file=f"{self.config.get(TEST_FILES_DIR)}/{self.test_data.group}/{self.serial_number}.txt",
+                          mode="w", encoding="utf-8") as test_file:
+                    test_file.write(self.__read_temp_data_file())
+            print("DONE")
+            self.__reset_setup()
+
+    def __read_temp_data_file(self) -> str:
+        if self.temp_data_file:
+            with open(self.temp_data_file.name, "r", encoding="utf-8") as file:
+                return file.read()
+        return ""
+
+    def __validate_step_values(self):
         step_pass = False
         current_step_data = []
         current_step = self.test_data.steps[self.current_step_index]
@@ -171,47 +248,17 @@ class TestController(QObject):
 
             current_step_data.append(channel_data)
 
-        print(f"STATUS: {step_pass}\nDATA: {current_step_data}")
+        self.test_sequence_status.append(step_pass)
+        self.__handle_test_results_data(current_step, tuple(current_step_data), step_pass)
 
-    @Slot()
-    def toggle_test_pause_state(self):
-        """
-        Toggle the current state between RUNNING and PAUSED.
-        :return:
-        """
-        if self.state not in [TestState.RUNNING, TestState.PAUSED]:
-            return
-        self.delay_manager.pause_resume()
-        self.__update_state(TestState.RUNNING if self.state is TestState.PAUSED else TestState.PAUSED)
-
-    @Slot()
-    def cancel_test_sequence(self):
-        """
-        Cancels the current test sequence.
-        :return: None.
-        """
-        if self.state not in [TestState.RUNNING, TestState.PAUSED, TestState.WAITKEY]:
-            return
-        print("CANCEL")
-        self.__update_state(TestState.CANCELED)
-        self.__reset_setup()
-
-    @Slot()
-    def __on_delay_completed(self):
-        if self.state is not TestState.CANCELED:
-            self.validate_step_values()
-            self.current_step_index += 1
-            self.run_steps()
-
-    @Slot()
-    def __update_output_display(self):
-        """
-        Updates the channel displays (voltage) in a dedicated thread.
-        :return: None.
-        """
-        for channel in self.channel_list:
-            voltage_value = self.electronic_load_controller.get_channel_value(channel.channel_id)
-            channel.set_values((float(voltage_value), None))
+    def __handle_test_results_data(self, current_step: Step, data: tuple, step_status: bool):
+        step_data = {
+            "description": current_step.description,
+            "step_status": step_status,
+            "step_type": current_step.step_type,
+            "channels_data": data
+        }
+        self.test_result_data["steps_result"].append(step_data)
 
     def __reset_setup(self):
         self.electronic_load_controller.reset_instrument()
@@ -222,6 +269,7 @@ class TestController(QObject):
         self.delay_manager.paused = False
         self.delay_manager.remaining_time = 0
         self.is_single_step_test = False
+        self.test_sequence_status.clear()
 
     def __update_state(self, new_state: TestState):
         """
