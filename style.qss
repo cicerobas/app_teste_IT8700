@@ -27,6 +27,31 @@ QLineEdit:focus {
   border: 1px solid #3498db;
 }
 
+QListWidget {
+  background-color: #f9f9f9;
+  border: 1px solid #ccc;
+  padding: 4px;
+  font-size: 14px;
+  outline: none;
+  border: 2px solid gray;
+  border-radius: 5px;
+}
+
+QListWidget::item {
+  margin: 2px;
+  border-radius: 4px;
+  color: #333;
+}
+
+QListWidget::item:hover {
+  background-color: #e6f0ff;
+}
+
+QListWidget::item:selected {
+  background-color: #3399ff;
+  color: white;
+}
+
 .channel_monitor {
   border: 2px solid gray;
   border-radius: 5px;
@@ -89,4 +114,21 @@ QLineEdit:focus {
 
 #label_default {
   color: black;
+}
+
+.details_gb {
+  border: 2px solid gray;
+  border-radius: 5px;
+  font-size: 22px;
+  padding-top: 25px;
+}
+.details_gb::title {
+  left: 10px;
+  top: 5px;
+}
+.details_gb QLabel {
+  font-weight: bold;
+}
+.details_gb .info_label {
+  font-weight: normal;
 }
