@@ -10,6 +10,13 @@ from views.channel_monitor_view import ChannelMonitorView
 ICON_SIZE = QSize(20, 20)
 
 
+def set_label_status(label: QLabel, status_name: str):
+    label.setObjectName(status_name)
+    label.style().unpolish(label)
+    label.style().polish(label)
+    label.update()
+
+
 class TestRunTabView(QWidget):
     def __init__(self, test_data: TestData, test_controller: TestController):
         super().__init__()
@@ -24,8 +31,10 @@ class TestRunTabView(QWidget):
         self.stop_button = QPushButton(icon=QIcon('assets/icons/stop.svg'), text=" STOP", parent=self)
         self.run_button.setIconSize(ICON_SIZE)
         self.stop_button.setIconSize(ICON_SIZE)
-        self.current_state_label = QLabel("STATE: ")
-        self.current_step_label = QLabel("STEP: ")
+        self.current_state_label = QLabel("")
+        self.current_state_label.setObjectName("state_label")
+        self.current_step_label = QLabel("")
+        self.current_step_label.setObjectName("step_label")
         self.timer_label = QLabel("0.0s")
         self.steps_progress_label = QLabel(f"0/{len(self.test_data.steps)}")
 
@@ -52,7 +61,7 @@ class TestRunTabView(QWidget):
 
     @Slot(str, float, int)
     def __set_step_info(self, description: str, duration: float, index: int):
-        self.current_step_label.setText(f"STEP: {description}")
+        self.current_step_label.setText(description)
         self.timer_label.setText(f"{duration}s")
         self.steps_progress_label.setText(f"{index + 1}/{len(self.test_data.steps)}")
 
@@ -70,7 +79,17 @@ class TestRunTabView(QWidget):
 
     @Slot(str)
     def __update_status_label(self, value):
-        self.current_state_label.setText(f"STATE: {value}")
+        self.current_state_label.setText(value)
+        match self.test_controller.state:
+            case TestState.PASSED | TestState.RUNNING:
+                set_label_status(self.current_state_label, "label_green")
+            case TestState.PAUSED | TestState.WAITKEY:
+                set_label_status(self.current_state_label, "label_orange")
+            case TestState.CANCELED | TestState.FAILED:
+                set_label_status(self.current_state_label, "label_red")
+            case _:
+                set_label_status(self.current_state_label, "label_default")
+
         self.__update_fields_state()
 
     def __update_fields_state(self):
@@ -104,22 +123,26 @@ class TestRunTabView(QWidget):
         # SETUP
         test_setup_groupbox = QGroupBox("SETUP")
         test_setup_groupbox.setProperty("class", "left_panel_gb")
-        test_setup_groupbox.setFixedWidth(350)
+        test_setup_groupbox.setFixedWidth(450)
         f_test_setup_layout = QFormLayout()
         f_test_setup_layout.addRow("Serial Nº : ", self.serial_number_field)
-        f_test_setup_layout.addRow("Tester: ", self.tester_id_field)
+        f_test_setup_layout.addRow("Tester : ", self.tester_id_field)
         f_test_setup_layout.addRow(action_buttons)
         test_setup_groupbox.setLayout(f_test_setup_layout)
 
         # INFO
         test_info_groupbox = QGroupBox("INFO")
+        test_info_groupbox.setMaximumWidth(450)
         test_info_groupbox.setProperty("class", "left_panel_gb")
         v_test_info_layout = QVBoxLayout()
+        v_test_info_layout.setSpacing(10)
         h_timer_progress_layout = QHBoxLayout()
         h_timer_progress_layout.addWidget(self.steps_progress_label)
-        h_timer_progress_layout.addWidget(self.timer_label)
-        v_test_info_layout.addWidget(self.current_state_label)
-        v_test_info_layout.addWidget(self.current_step_label)
+        h_timer_progress_layout.addWidget(self.timer_label, alignment=Qt.AlignmentFlag.AlignRight)
+        f_test_info_layout = QFormLayout()
+        f_test_info_layout.addRow("STATE:", self.current_state_label)
+        f_test_info_layout.addRow("STEP:", self.current_step_label)
+        v_test_info_layout.addLayout(f_test_info_layout)
         v_test_info_layout.addLayout(h_timer_progress_layout)
         test_info_groupbox.setLayout(v_test_info_layout)
 

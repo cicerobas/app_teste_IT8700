@@ -66,3 +66,27 @@ QLineEdit:focus {
   left: 10px;
   top: 5px;
 }
+.left_panel_gb > QLabel {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.left_panel_gb #step_label {
+  color: #1c5986;
+}
+
+#label_green {
+  color: green;
+}
+
+#label_orange {
+  color: orange;
+}
+
+#label_red {
+  color: red;
+}
+
+#label_default {
+  color: black;
+}

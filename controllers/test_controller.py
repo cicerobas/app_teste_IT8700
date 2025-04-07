@@ -208,8 +208,8 @@ class TestController(QObject):
 
             self.temp_data_file = generate_report_file(self.test_result_data)
 
-            # if self.state is TestState.PASSED and not self.is_single_step_test:
-            if not self.is_single_step_test:  # TESTE
+            # if not self.is_single_step_test:  # TESTE
+            if self.state is TestState.PASSED and not self.is_single_step_test:
                 with open(file=f"{self.config.get(TEST_FILES_DIR)}/{self.test_data.group}/{self.serial_number}.txt",
                           mode="w", encoding="utf-8") as test_file:
                     test_file.write(self.__read_temp_data_file())
