@@ -117,7 +117,7 @@ class TestController(QObject):
     def setup_single_run(self, step_id):
         """
         Setups a single step test and starts the test sequence.
-        :param step_id: Id of the Step.
+        :param step_id: ID of the Step.
         :return: None.
         """
         for index, step in enumerate(self.test_data.steps):
@@ -249,12 +249,11 @@ class TestController(QObject):
                         "power": values.get("power", 0.0)
                     }
             if channel_params:
-                if channel_params.va <= values.get("voltage", 0.0) <= channel_params.vb:
-                    step_pass = True
+                step_pass = True if channel_params.va <= values.get("voltage", 0.0) <= channel_params.vb else False
+                self.test_sequence_status.append(step_pass)
 
             current_step_data.append(channel_data)
 
-        self.test_sequence_status.append(step_pass)
         self.__handle_test_results_data(current_step, tuple(current_step_data), step_pass)
 
     def __handle_test_results_data(self, current_step: Step, data: tuple, step_status: bool):
