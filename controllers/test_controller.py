@@ -60,6 +60,7 @@ class TestController(QObject):
         self.tester_id: str = ""
         self.is_single_step_test: bool = False
         self.current_step_index: int = 0
+        self.single_step_index: int = -1
         self.test_result_data = dict()
         self.test_sequence_status: list[bool] = []
         self.temp_data_file = None
@@ -97,16 +98,15 @@ class TestController(QObject):
             self.__update_serial_number(True)
 
         self.__update_state(TestState.RUNNING)
-        if not self.is_single_step_test:
-            self.current_step_index = 0
-            self.test_result_data.update(
-                group=self.test_data.group,
-                model=self.test_data.model,
-                customer=self.test_data.customer,
-                tester_id=self.tester_id,
-                serial_number=self.serial_number,
-                steps_result=[]
-            )
+        self.current_step_index = 0
+        self.test_result_data.update(
+            group=self.test_data.group,
+            model=self.test_data.model,
+            customer=self.test_data.customer,
+            tester_id=self.tester_id,
+            serial_number=self.serial_number,
+            steps_result=[]
+        )
 
         self.electronic_load_controller.toggle_active_channels_input(
             [key for key in self.test_data.channels.keys()], True)
@@ -114,15 +114,17 @@ class TestController(QObject):
         self.__run_steps()
 
     @Slot(int)
-    def setup_single_run(self, step_index):
+    def setup_single_run(self, step_id):
         """
         Setups a single step test and starts the test sequence.
-        :param step_index: Index of the Step.
+        :param step_id: Id of the Step.
         :return: None.
         """
-        self.is_single_step_test = True
-        self.current_step_index = step_index
-        self.start_test_sequence()
+        for index, step in enumerate(self.test_data.steps):
+            if step.id == step_id:
+                self.single_step_index = index
+                self.is_single_step_test = True
+                self.start_test_sequence()
 
     @Slot()
     def toggle_test_pause_state(self):
@@ -172,7 +174,7 @@ class TestController(QObject):
     def __run_steps(self):
         sleep(1)
         if self.is_single_step_test:
-            steps = [self.test_data.steps[self.current_step_index]]
+            steps = [self.test_data.steps[self.single_step_index]]
         else:
             steps = self.test_data.steps
 
@@ -180,7 +182,6 @@ class TestController(QObject):
             current_step: Step = steps[self.current_step_index]
             self.arduino_controller.set_input_source(current_step.input_source, self.test_data.input_type)
             self.current_step_changed.emit(current_step.description, current_step.duration, self.current_step_index)
-
             match current_step.step_type:
                 case 1:
                     for channel_id, param_id in current_step.channel_params.items():
@@ -274,6 +275,7 @@ class TestController(QObject):
         self.delay_manager.paused = False
         self.delay_manager.remaining_time = 0
         self.is_single_step_test = False
+        self.single_step_index = -1
         self.test_sequence_status.clear()
 
     def __update_state(self, new_state: TestState):

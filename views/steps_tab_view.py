@@ -1,22 +1,24 @@
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QListWidget, QFormLayout, QListWidgetItem, QLabel, QGroupBox, \
-    QVBoxLayout
+    QVBoxLayout, QPushButton
 
+from controllers.test_controller import TestController
 from models.test_file_model import Step, TestData
 
 
 class StepsTabView(QWidget):
-    def __init__(self, test_data: TestData):
+    def __init__(self, test_data: TestData, test_controller: TestController):
         super().__init__()
         self.test_data: TestData = test_data
-
+        self.test_controller = test_controller
 
         self.step_list_view = QListWidget()
-        self.step_list_view.setMaximumWidth(500)
+        self.step_list_view.setMaximumWidth(450)
         self.step_list_view.currentRowChanged.connect(self.setup_step_details)
 
         for step in self.test_data.steps:
-            self.setup_custom_list_item(step)
+            self.__setup_custom_list_item(step)
 
         self.step_description_label = QLabel()
         self.step_type_label = QLabel()
@@ -82,14 +84,17 @@ class StepsTabView(QWidget):
             if widget is not None:
                 widget.deleteLater()
 
-    def setup_custom_list_item(self, step: Step):
+    def __setup_custom_list_item(self, step: Step):
         step_item = QListWidgetItem()
         step_item.setData(Qt.ItemDataRole.UserRole, step.id)
         step_item_widget = QWidget()
+        run_step_button = QPushButton(" RUN")
+        run_step_button.setIcon(QIcon('assets/icons/play.svg'))
+        run_step_button.clicked.connect(lambda _: self.test_controller.setup_single_run(step.id))
         step_item_layout = QHBoxLayout()
         step_item_layout.addWidget(QLabel(step.description))
+        step_item_layout.addWidget(run_step_button, alignment=Qt.AlignmentFlag.AlignRight)
         step_item_widget.setLayout(step_item_layout)
         step_item.setSizeHint(step_item_widget.sizeHint())
         self.step_list_view.addItem(step_item)
         self.step_list_view.setItemWidget(step_item, step_item_widget)
-
