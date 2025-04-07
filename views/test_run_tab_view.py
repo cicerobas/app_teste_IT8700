@@ -94,14 +94,19 @@ class TestRunTabView(QWidget):
 
     def __update_fields_state(self):
         state = self.test_controller.state
+        self.serial_number_field.setReadOnly(True)
+        self.tester_id_field.setReadOnly(True)
         if state in [TestState.RUNNING, TestState.PAUSED]:
-            self.serial_number_field.setReadOnly(True)
-            self.tester_id_field.setReadOnly(True)
             self.run_button.setIcon(
                 QIcon('assets/icons/pause.svg') if state is TestState.RUNNING else QIcon('assets/icons/play.svg'))
             self.run_button.setText(" PAUSE" if state is TestState.RUNNING else " CONTINUE")
             self.run_button.clicked.disconnect()
             self.run_button.clicked.connect(self.test_controller.toggle_test_pause_state)
+        elif state is TestState.WAITKEY:
+            self.run_button.setIcon(QIcon('assets/icons/play.svg'))
+            self.run_button.setText(" CONTINUE")
+            self.run_button.clicked.disconnect()
+            self.run_button.clicked.connect(self.test_controller.continue_sequence)
         else:
             self.serial_number_field.setReadOnly(False)
             self.tester_id_field.setReadOnly(False)
@@ -109,6 +114,8 @@ class TestRunTabView(QWidget):
             self.run_button.setText(" RUN")
             self.run_button.clicked.disconnect()
             self.run_button.clicked.connect(self.test_controller.start_test_sequence)
+
+        self.run_button.setFocus()
 
     def __setup_layout(self) -> QHBoxLayout:
 

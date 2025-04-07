@@ -136,6 +136,11 @@ class TestController(QObject):
         self.__update_state(TestState.RUNNING if self.state is TestState.PAUSED else TestState.PAUSED)
 
     @Slot()
+    def continue_sequence(self):
+        self.__update_state(TestState.RUNNING)
+        self.__on_delay_completed()
+
+    @Slot()
     def cancel_test_sequence(self):
         """
         Cancels the current test sequence.
