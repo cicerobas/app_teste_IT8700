@@ -72,6 +72,7 @@ class TestRunTabView(QWidget):
     @Slot(str)
     def __set_serial_number(self, value):
         self.test_controller.serial_number = value.zfill(8)
+        self.test_controller.serial_number_needs_increment = False
 
     @Slot(str)
     def __update_serial_number_field(self, value):
@@ -94,6 +95,9 @@ class TestRunTabView(QWidget):
 
     def __update_fields_state(self):
         state = self.test_controller.state
+        if state is TestState.NONE:
+            return
+
         self.serial_number_field.setReadOnly(True)
         self.tester_id_field.setReadOnly(True)
         if state in [TestState.RUNNING, TestState.PAUSED]:

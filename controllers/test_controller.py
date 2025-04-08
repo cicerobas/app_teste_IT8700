@@ -64,6 +64,7 @@ class TestController(QObject):
         self.test_result_data = dict()
         self.test_sequence_status: list[bool] = []
         self.temp_data_file = None
+        self.serial_number_needs_increment = False
 
         # Instances
         self.config = ConfigManager()
@@ -92,10 +93,10 @@ class TestController(QObject):
         #     return
 
         if self.serial_number == "":
-            self.__update_serial_number(False)
+            self.__update_serial_number(self.serial_number_needs_increment)
 
-        if self.state is TestState.PASSED and not self.is_single_step_test:
-            self.__update_serial_number(True)
+        if self.state is TestState.PASSED:
+            self.__update_serial_number(self.serial_number_needs_increment)
 
         self.__update_state(TestState.RUNNING)
         self.current_step_index = 0
@@ -124,6 +125,7 @@ class TestController(QObject):
             if step.id == step_id:
                 self.single_step_index = index
                 self.is_single_step_test = True
+                self.serial_number_needs_increment = False
                 self.start_test_sequence()
 
     @Slot()
@@ -148,7 +150,7 @@ class TestController(QObject):
         Cancels the current test sequence.
         :return: None.
         """
-        if self.state not in [TestState.RUNNING, TestState.PAUSED, TestState.WAITKEY]:
+        if self.state not in [TestState.RUNNING, TestState.PAUSED, TestState.WAITKEY, TestState.NONE]:
             return
         print("CANCEL")
         self.__update_state(TestState.CANCELED)
@@ -157,7 +159,7 @@ class TestController(QObject):
     @Slot()
     def __on_delay_completed(self):
         if self.state is not TestState.CANCELED:
-            self.__validate_step_values()
+            self.__validate_direct_current_step_values()
             self.current_step_index += 1
             self.__run_steps()
 
@@ -187,7 +189,6 @@ class TestController(QObject):
                     self.__handle_direct_current_step(current_step)
                 case 2:
                     self.__handle_current_limiting_step(current_step)
-
                 case 3:
                     pass
 
@@ -208,6 +209,7 @@ class TestController(QObject):
                 with open(file=f"{self.config.get(TEST_FILES_DIR)}/{self.test_data.group}/{self.serial_number}.txt",
                           mode="w", encoding="utf-8") as test_file:
                     test_file.write(self.__read_temp_data_file())
+                self.serial_number_needs_increment = True
             print("DONE")
             self.__reset_setup()
 
@@ -231,6 +233,7 @@ class TestController(QObject):
             self.delay_manager.start_delay(current_step.duration * 1000)
 
     def __handle_current_limiting_step(self, current_step: Step):
+        self.__update_state(TestState.NONE)
         self.__handle_channels_current(current_step.channel_params, None, None)
 
     def __handle_channels_current(self, channel_params: dict[int, int], data: list[dict] | None,
@@ -239,7 +242,6 @@ class TestController(QObject):
 
         if self.state is TestState.CANCELED:
             return
-
         if not data:
             channels_data = []
             for channel_id, param_id in channel_params.items():
@@ -280,15 +282,38 @@ class TestController(QObject):
                     QTimer.singleShot(100, lambda: self.__handle_channels_current(channel_params, channels_data,
                                                                                   params.ia, current_index + 1))
         else:
-            print(channels_data)
+            self.__update_state(TestState.RUNNING)
+            self.__validate_current_limiting_step_values(channels_data)
             self.current_step_index += 1
             self.__run_steps()
 
-    def __validate_step_values(self):
+    def __validate_current_limiting_step_values(self, data: list[dict]):
         step_pass = False
         current_step_data = []
-        current_step = self.test_data.steps[self.current_step_index]
+        current_step = self.test_data.steps[
+            self.single_step_index if self.is_single_step_test else self.current_step_index]
+        for channel in data:
+            channel_data = {}
+            channel_params = next((param for param in self.test_data.params if param.id == channel["param_id"]), None)
+            if channel_params:
+                channel_data = {
+                    "channel_id": str(channel["id"]),
+                    "under_voltage": channel_params.va,
+                    "load_upper": channel_params.ib,
+                    "load_lower": channel_params.ia,
+                    "load": channel["limit"]
+                }
+                step_pass = True if channel_params.ia <= channel["limit"] <= channel_params.ib else False
+                self.test_sequence_status.append(step_pass)
 
+            current_step_data.append(channel_data)
+        self.__handle_test_results_data(current_step, tuple(current_step_data), step_pass)
+
+    def __validate_direct_current_step_values(self):
+        step_pass = False
+        current_step_data = []
+        current_step = self.test_data.steps[
+            self.single_step_index if self.is_single_step_test else self.current_step_index]
         for channel in self.channel_list:
             values = channel.get_values()
             channel_data = {}
@@ -349,7 +374,7 @@ class TestController(QObject):
         :param is_increment: Case true, increments the number.
         :return: None.
         """
-        new_value = str(int(self.serial_number) + 1) if is_increment else ""
+        new_value = str(int(self.serial_number) + 1) if is_increment else self.serial_number
         self.serial_number = new_value.zfill(8)
         self.serial_number_updated.emit(self.serial_number)
 

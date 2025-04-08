@@ -1,5 +1,5 @@
-from datetime import datetime
 import tempfile
+from datetime import datetime
 
 
 def generate_report_file(data: dict):
@@ -86,7 +86,7 @@ def generate_report_file(data: dict):
                     under_voltage = str(channel["under_voltage"])
                     load_upper = str(channel["load_upper"])
                     load_lower = str(channel["load_lower"])
-                    load_limit = str(channel["load"])
+                    load_limit = str("%.2f" % channel["load"])
 
                     channels_line += f"[Channel {channel['channel_id']}]=="
                     under_voltage_line += (
