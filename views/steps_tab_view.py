@@ -40,7 +40,7 @@ class StepsTabView(QWidget):
             case 1:
                 step_type = "Direct Current"
             case 2:
-                step_type = "Over current"
+                step_type = "Current Limiting"
             case 3:
                 step_type = "Automatic Short"
         self.step_type_label.setText(step_type)

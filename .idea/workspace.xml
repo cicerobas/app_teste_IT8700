@@ -7,6 +7,7 @@
     <list default="true" id="555fd9b4-b0fb-4e5e-a58c-0fd6716abb63" name="Changes" comment="-">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/controllers/test_controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/test_controller.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/views/steps_tab_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/steps_tab_view.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,19 +46,19 @@
     <option name="showExcludedFiles" value="false" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.ex.executor": "Run",
-    "Python.exemplo.executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.test_run_tab_view.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "develop",
-    "last_opened_file_path": "/home/cebra/PycharmProjects/app_teste_IT8700/utils",
-    "settings.editor.selected.configurable": "preferences.pluginManager"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.ex.executor&quot;: &quot;Run&quot;,
+    &quot;Python.exemplo.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_run_tab_view.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feat/limitation__test&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/cebra/PycharmProjects/app_teste_IT8700/utils&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/utils" />

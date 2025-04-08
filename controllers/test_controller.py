@@ -2,7 +2,7 @@ import os
 from enum import Enum
 from time import sleep
 
-from PySide6.QtCore import QObject, Signal, QThreadPool, Slot
+from PySide6.QtCore import QObject, Signal, QThreadPool, Slot, QTimer
 from PySide6.QtWidgets import QMessageBox
 
 from controllers.arduino_controller import ArduinoController
@@ -184,20 +184,9 @@ class TestController(QObject):
             self.current_step_changed.emit(current_step.description, current_step.duration, self.current_step_index)
             match current_step.step_type:
                 case 1:
-                    for channel_id, param_id in current_step.channel_params.items():
-                        channel_params = next((param for param in self.test_data.params if param.id == param_id), None)
-                        if channel_params:
-                            self.electronic_load_controller.set_channel_current(channel_id, channel_params.ia)
-                            for channel in self.channel_list:
-                                channel.set_values((None, channel_params.ia))
-
-                    if current_step.duration == 0:
-                        self.__update_state(TestState.WAITKEY)
-                    else:
-                        self.delay_manager.start_delay(current_step.duration * 1000)
-
+                    self.__handle_direct_current_step(current_step)
                 case 2:
-                    pass
+                    self.__handle_current_limiting_step(current_step)
 
                 case 3:
                     pass
@@ -227,6 +216,73 @@ class TestController(QObject):
             with open(self.temp_data_file.name, "r", encoding="utf-8") as file:
                 return file.read()
         return ""
+
+    def __handle_direct_current_step(self, current_step: Step):
+        for channel_id, param_id in current_step.channel_params.items():
+            channel_params = next((param for param in self.test_data.params if param.id == param_id), None)
+            if channel_params:
+                self.electronic_load_controller.set_channel_current(channel_id, channel_params.ia)
+                for channel in self.channel_list:
+                    channel.set_values((None, channel_params.ia))
+
+        if current_step.duration == 0:
+            self.__update_state(TestState.WAITKEY)
+        else:
+            self.delay_manager.start_delay(current_step.duration * 1000)
+
+    def __handle_current_limiting_step(self, current_step: Step):
+        self.__handle_channels_current(current_step.channel_params, None, None)
+
+    def __handle_channels_current(self, channel_params: dict[int, int], data: list[dict] | None,
+                                  current_load: float | None,
+                                  current_index: int = 0):
+
+        if self.state is TestState.CANCELED:
+            return
+
+        if not data:
+            channels_data = []
+            for channel_id, param_id in channel_params.items():
+                channels_data.append({'id': channel_id, 'param_id': param_id, 'limit': 0.0, 'done': False})
+        else:
+            channels_data = data
+
+        if current_index < len(channels_data):
+
+            current_channel = channels_data[current_index]
+            current_channel_view = next(
+                (channel for channel in self.channel_list if channel.channel_id == current_channel["id"]))
+            params = next((param for param in self.test_data.params if param.id == current_channel["param_id"]))
+            if not current_load:
+                current_load = params.ia
+
+            read = self.electronic_load_controller.get_channel_value(current_channel["id"])
+            voltage_read = float(read) if read else 0.0
+            if not current_channel["done"]:
+                if voltage_read >= params.va and current_load <= params.ib:
+                    current_load += 0.01
+                    self.electronic_load_controller.set_channel_current(current_channel["id"], current_load)
+                    current_channel_view.set_values((None, current_load))
+                    QTimer.singleShot(100, lambda: self.__handle_channels_current(channel_params, channels_data,
+                                                                                  current_load, current_index))
+                else:
+                    current_channel["limit"] = current_load
+                    self.electronic_load_controller.set_channel_current(current_channel["id"], params.ia)
+                    current_channel_view.set_values((None, params.ia))
+                    current_channel["done"] = True
+                    QTimer.singleShot(100, lambda: self.__handle_channels_current(channel_params, channels_data,
+                                                                                  params.ia, current_index))
+            else:
+                if voltage_read <= params.va:
+                    QTimer.singleShot(100, lambda: self.__handle_channels_current(channel_params, channels_data,
+                                                                                  params.ia, current_index))
+                else:
+                    QTimer.singleShot(100, lambda: self.__handle_channels_current(channel_params, channels_data,
+                                                                                  params.ia, current_index + 1))
+        else:
+            print(channels_data)
+            self.current_step_index += 1
+            self.__run_steps()
 
     def __validate_step_values(self):
         step_pass = False
