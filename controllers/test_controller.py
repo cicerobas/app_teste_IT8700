@@ -211,7 +211,7 @@ class TestController(QObject):
                 with open(file=f"{self.config.get(TEST_FILES_DIR)}/{self.test_data.group}/{self.serial_number}.txt",
                           mode="w", encoding="utf-8") as test_file:
                     test_file.write(self.__read_temp_data_file())
-                self.serial_number_needs_increment = True
+                self.__update_serial_number(True)
             print("DONE")
             self.__update_output_display()
             self.reset_setup()
