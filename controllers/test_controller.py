@@ -221,13 +221,12 @@ class TestController(QObject):
         for channel_id, param_id in current_step.channel_params.items():
             channel_view = self.__get_channel_view_by_id(channel_id)
             channel_params = self.__get_channel_params_by_id(param_id)
-            match current_step.step_type:
-                case 1:
-                    channel_view.set_limits(channel_params.va, channel_params.vb)
-                case 2 | 3:
-                    lower_value = channel_params.va * 0.5
-                    upper_value = channel_params.va + lower_value
-                    channel_view.set_limits(lower_value, upper_value)
+            if current_step.step_type == 1:
+                channel_view.set_limits(channel_params.va, channel_params.vb)
+            else:
+                lower_value = channel_params.va * 0.5
+                upper_value = channel_params.va + lower_value
+                channel_view.set_limits(round(lower_value, 2), round(upper_value, 2))
 
     def __read_temp_data_file(self) -> str:
         if self.temp_data_file:
