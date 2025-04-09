@@ -184,6 +184,7 @@ class TestController(QObject):
             current_step: Step = steps[self.current_step_index]
             self.arduino_controller.set_input_source(current_step.input_source, self.test_data.input_type)
             self.current_step_changed.emit(current_step.description, current_step.duration, self.current_step_index)
+            self.__update_display_limits(current_step)
             match current_step.step_type:
                 case 1:
                     self.__handle_direct_current_step(current_step)
@@ -215,6 +216,18 @@ class TestController(QObject):
             print("DONE")
             self.__update_output_display()
             self.reset_setup()
+
+    def __update_display_limits(self, current_step: Step):
+        for channel_id, param_id in current_step.channel_params.items():
+            channel_view = self.__get_channel_view_by_id(channel_id)
+            channel_params = self.__get_channel_params_by_id(param_id)
+            match current_step.step_type:
+                case 1:
+                    channel_view.set_limits(channel_params.va, channel_params.vb)
+                case 2 | 3:
+                    lower_value = channel_params.va * 0.5
+                    upper_value = channel_params.va + lower_value
+                    channel_view.set_limits(lower_value, upper_value)
 
     def __read_temp_data_file(self) -> str:
         if self.temp_data_file:

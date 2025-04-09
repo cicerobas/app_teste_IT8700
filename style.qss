@@ -52,6 +52,30 @@ QListWidget::item:selected {
   color: white;
 }
 
+QSlider::groove:horizontal {
+  border: 1px solid #bbb;
+  height: 4px;
+  background: #ddd;
+  margin: 0px;
+  border-radius: 2px;
+}
+
+QSlider::handle:horizontal {
+  background: #444;
+  border: 1px solid #222;
+  width: 2px;
+  height: 14px;
+  margin: -5px 0;
+}
+
+QSlider::sub-page:horizontal {
+  background: transparent;
+}
+
+QSlider::add-page:horizontal {
+  background: transparent;
+}
+
 .channel_monitor {
   border: 2px solid gray;
   border-radius: 5px;
