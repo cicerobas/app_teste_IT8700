@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QMessageBox
 
 from controllers.arduino_controller import ArduinoController
 from controllers.electronic_load_controller import ElectronicLoadController
-from models.test_file_model import TestData, Step
+from models.test_file_model import TestData, Step, Param
 from utils.config_manager import ConfigManager
 from utils.constants import TEST_FILES_DIR
 from utils.delay_manager import DelayManager
@@ -190,7 +190,7 @@ class TestController(QObject):
                 case 2:
                     self.__handle_current_limiting_step(current_step)
                 case 3:
-                    pass
+                    self.__handle_short_test_step(current_step)
 
         else:
             self.electronic_load_controller.toggle_active_channels_input(
@@ -219,9 +219,69 @@ class TestController(QObject):
                 return file.read()
         return ""
 
+    def __handle_short_test_step(self, current_step: Step):
+        channels_data = []
+        for channel_id, param_id in current_step.channel_params.items():
+            channels_data.append({'id': channel_id, 'param_id': param_id, 'shutdown': False, 'recovery': False})
+        self.__verify_short_test(channels_data)
+
+    def __verify_short_test(self, data: list[dict], current_index: int = 0, current_cycle: int = 0):
+        if self.state is TestState.CANCELED:
+            return
+        delay = 500
+        if current_index < len(data):
+            current_channel = data[current_index]
+            channel_params = self.__get_channel_params_by_id(current_channel["param_id"])
+            if current_cycle == 0:
+                self.electronic_load_controller.set_channel_current(current_channel["id"], channel_params.ia)
+
+            current_channel_view = self.__get_channel_view_by_id(current_channel["id"])
+            channel_values = current_channel_view.get_values()
+            voltage_read = channel_values["voltage"]
+            if current_cycle < 20 and not current_channel["recovery"]:
+                if voltage_read >= channel_params.va * 0.2 and not current_channel["shutdown"]:
+                    self.electronic_load_controller.toggle_short_mode(current_channel["id"], True)
+                elif voltage_read <= channel_params.va * 0.2 and not current_channel["shutdown"]:
+                    current_channel["shutdown"] = True
+                    self.electronic_load_controller.toggle_short_mode(current_channel["id"], False)
+                elif voltage_read >= channel_params.va and current_channel["shutdown"] and not current_channel[
+                    "recovery"]:
+                    current_channel["recovery"] = True
+
+                QTimer.singleShot(delay, lambda: self.__verify_short_test(data, current_index, current_cycle + 1))
+            else:
+                self.electronic_load_controller.set_channel_current(current_channel["id"], 0)
+                QTimer.singleShot(delay, lambda: self.__verify_short_test(data, current_index + 1, 0))
+        else:
+            self.__validate_short_test_step(data)
+            self.current_step_index += 1
+            self.__run_steps()
+
+    def __validate_short_test_step(self, data: list[dict]):
+        step_pass = False
+        current_step_data = []
+        current_step = self.test_data.steps[
+            self.single_step_index if self.is_single_step_test else self.current_step_index]
+        for channel in data:
+            channel_data = {}
+            channel_params = self.__get_channel_params_by_id(channel["param_id"])
+            if channel_params:
+                channel_data = {
+                    "channel_id": str(channel["id"]),
+                    "shutdown": channel["shutdown"],
+                    "recovery": channel["recovery"],
+                    "voltage_ref": channel_params.va,
+                    "load": channel_params.ia
+                }
+            current_step_data.append(channel_data)
+            step_pass = channel["shutdown"] and channel["recovery"]
+            self.test_sequence_status.append(step_pass)
+
+        self.__handle_test_results_data(current_step, tuple(current_step_data), step_pass)
+
     def __handle_direct_current_step(self, current_step: Step):
         for channel_id, param_id in current_step.channel_params.items():
-            channel_params = next((param for param in self.test_data.params if param.id == param_id), None)
+            channel_params = self.__get_channel_params_by_id(param_id)
             if channel_params:
                 self.electronic_load_controller.set_channel_current(channel_id, channel_params.ia)
                 for channel in self.channel_list:
@@ -252,14 +312,13 @@ class TestController(QObject):
         if current_index < len(channels_data):
 
             current_channel = channels_data[current_index]
-            current_channel_view = next(
-                (channel for channel in self.channel_list if channel.channel_id == current_channel["id"]))
-            params = next((param for param in self.test_data.params if param.id == current_channel["param_id"]))
+            current_channel_view = self.__get_channel_view_by_id(current_channel["id"])
+            params = self.__get_channel_params_by_id(current_channel["param_id"])
             if not current_load:
                 current_load = params.ia
 
-            read = self.electronic_load_controller.get_channel_value(current_channel["id"])
-            voltage_read = float(read) if read else 0.0
+            channel_values = current_channel_view.get_values()
+            voltage_read = channel_values["voltage"]
             if not current_channel["done"]:
                 if voltage_read >= params.va and current_load <= params.ib:
                     current_load += 0.01
@@ -294,7 +353,7 @@ class TestController(QObject):
             self.single_step_index if self.is_single_step_test else self.current_step_index]
         for channel in data:
             channel_data = {}
-            channel_params = next((param for param in self.test_data.params if param.id == channel["param_id"]), None)
+            channel_params = self.__get_channel_params_by_id(channel["param_id"])
             if channel_params:
                 channel_data = {
                     "channel_id": str(channel["id"]),
@@ -319,7 +378,7 @@ class TestController(QObject):
             channel_data = {}
             channel_params = None
             for param_id in current_step.channel_params.values():
-                channel_params = next((param for param in self.test_data.params if param.id == param_id), None)
+                channel_params = self.__get_channel_params_by_id(param_id)
                 if channel_params:
                     channel_data = {
                         "channel_id": str(channel.channel_id),
@@ -401,3 +460,9 @@ class TestController(QObject):
             show_custom_dialog("ARDUINO : INSTRUMENT NOT FOUND.", QMessageBox.Icon.Critical)
             return False
         return True
+
+    def __get_channel_params_by_id(self, param_id: int) -> Param | None:
+        return next((param for param in self.test_data.params if param.id == param_id), None)
+
+    def __get_channel_view_by_id(self, channel_id: int) -> ChannelMonitorView | None:
+        return next((channel_view for channel_view in self.channel_list if channel_view.channel_id == channel_id), None)
