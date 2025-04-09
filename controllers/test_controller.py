@@ -154,7 +154,7 @@ class TestController(QObject):
             return
         print("CANCEL")
         self.__update_state(TestState.CANCELED)
-        self.__reset_setup()
+        self.reset_setup()
 
     @Slot()
     def __on_delay_completed(self):
@@ -203,6 +203,8 @@ class TestController(QObject):
                 self.__update_state(TestState.FAILED if False in self.test_sequence_status else TestState.PASSED)
 
             self.temp_data_file = generate_report_file(self.test_result_data)
+            if self.state is TestState.FAILED:
+                print(self.__read_temp_data_file())
 
             # if not self.is_single_step_test:  # TESTE
             if self.state is TestState.PASSED and not self.is_single_step_test:
@@ -211,7 +213,8 @@ class TestController(QObject):
                     test_file.write(self.__read_temp_data_file())
                 self.serial_number_needs_increment = True
             print("DONE")
-            self.__reset_setup()
+            self.__update_output_display()
+            self.reset_setup()
 
     def __read_temp_data_file(self) -> str:
         if self.temp_data_file:
@@ -284,8 +287,8 @@ class TestController(QObject):
             channel_params = self.__get_channel_params_by_id(param_id)
             if channel_params:
                 self.electronic_load_controller.set_channel_current(channel_id, channel_params.ia)
-                for channel in self.channel_list:
-                    channel.set_values((None, channel_params.ia))
+                channel_view = self.__get_channel_view_by_id(channel_id)
+                channel_view.set_values((None, channel_params.ia))
 
         if current_step.duration == 0:
             self.__update_state(TestState.WAITKEY)
@@ -373,24 +376,23 @@ class TestController(QObject):
         current_step_data = []
         current_step = self.test_data.steps[
             self.single_step_index if self.is_single_step_test else self.current_step_index]
-        for channel in self.channel_list:
-            values = channel.get_values()
+        for channel_id, param_id in current_step.channel_params.items():
+            channel_view = self.__get_channel_view_by_id(channel_id)
+            values = channel_view.get_values()
             channel_data = {}
-            channel_params = None
-            for param_id in current_step.channel_params.values():
-                channel_params = self.__get_channel_params_by_id(param_id)
-                if channel_params:
-                    channel_data = {
-                        "channel_id": str(channel.channel_id),
-                        "outcome_voltage": values.get("voltage", 0.0),
-                        "lower_voltage": channel_params.va,
-                        "upper_voltage": channel_params.vb,
-                        "load": values.get("current", 0.0),
-                        "power": values.get("power", 0.0)
-                    }
+            channel_params = self.__get_channel_params_by_id(param_id)
             if channel_params:
-                step_pass = True if channel_params.va <= values.get("voltage", 0.0) <= channel_params.vb else False
-                self.test_sequence_status.append(step_pass)
+                channel_data = {
+                    "channel_id": str(channel_view.channel_id),
+                    "outcome_voltage": values.get("voltage", 0.0),
+                    "lower_voltage": channel_params.va,
+                    "upper_voltage": channel_params.vb,
+                    "load": values.get("current", 0.0),
+                    "power": values.get("power", 0.0)
+                }
+
+            step_pass = True if channel_params.va <= values.get("voltage", 0.0) <= channel_params.vb else False
+            self.test_sequence_status.append(step_pass)
 
             current_step_data.append(channel_data)
 
@@ -405,7 +407,7 @@ class TestController(QObject):
         }
         self.test_result_data["steps_result"].append(step_data)
 
-    def __reset_setup(self):
+    def reset_setup(self):
         self.electronic_load_controller.reset_instrument()
         self.electronic_load_controller.toggle_active_channels_input(
             [key for key in self.test_data.channels.keys()], False)

@@ -53,4 +53,4 @@ class ChannelMonitorView(QGroupBox):
     def __update_displays(self):
         self.voltage_label.setText(f"{'%.2f' % self.__voltage if self.__voltage >= 10 else '%.3f' % self.__voltage} V")
         self.current_label.setText(f"{'%.2f' % self.__current if self.__current >= 10 else '%.2f' % self.__current} A")
-        self.power_label.setText(f"{'%.2f' % self.__power if self.__power < 100 else self.__power} W")
+        self.power_label.setText(f"{'%.2f' % self.__power} W")

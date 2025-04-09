@@ -56,5 +56,6 @@ class TestWindow(QWidget):
     def closeEvent(self, event: QCloseEvent) -> None:
         if self.test_controller.monitoring_worker is not None:
             self.test_controller.monitoring_worker.stop()
+        self.test_controller.reset_setup()
         self.parent_window.show()
         event.accept()
