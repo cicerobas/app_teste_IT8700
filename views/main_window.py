@@ -8,6 +8,7 @@ from utils.config_manager import ConfigManager
 from utils.constants import TEST_FILES_DIR
 from utils.window_utils import center_window
 from views.configs_window import ConfigWindow
+from views.create_test_window import CreateTestWindow
 from views.test_window import TestWindow
 
 
@@ -21,6 +22,7 @@ class MainWindow(QWidget):
         center_window(self)
 
         self.config_window = ConfigWindow(self)
+        self.create_test_window = CreateTestWindow(self)
         self.test_window = None
 
         # LOGO
@@ -56,6 +58,7 @@ class MainWindow(QWidget):
 
     def connect_signals(self):
         self.start_button.clicked.connect(lambda: self.show_window(0))
+        self.create_button.clicked.connect(lambda: self.show_window(1))
         self.settings_button.clicked.connect(lambda: self.show_window(3))
 
     def show_file_load_dialog(self) -> str | None:
@@ -91,6 +94,9 @@ class MainWindow(QWidget):
                     self.hide()
                     self.test_window = TestWindow(test_data, self)
                     self.test_window.showMaximized()
+            case 1:
+                self.hide()
+                self.create_test_window.showMaximized()
             case 3:
                 self.hide()
                 self.config_window.show()

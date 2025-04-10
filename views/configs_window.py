@@ -29,7 +29,7 @@ class ConfigWindow(QWidget):
         self.arduino_baud_rate_field.setRange(0, 115200)
         self.sat_baud_rate_field.setValue(self.config.get(SAT_BAUD_RATE))
         self.arduino_baud_rate_field.setValue(self.config.get(ARDUINO_BAUD_RATE))
-        self.apply_changes_button = QPushButton(text="Apply", icon=QIcon("assets/icons/check_FFFFFF.svg"))
+        self.apply_changes_button = QPushButton(text="Apply", icon=QIcon("assets/icons/check.svg"))
         self.apply_changes_button.setEnabled(False)
 
         self.test_files_dir_field.textChanged.connect(lambda value: self.set_changed_fields(TEST_FILES_DIR, value))
