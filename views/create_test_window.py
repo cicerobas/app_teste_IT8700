@@ -6,7 +6,6 @@ from PySide6.QtWidgets import QWidget, QLineEdit, QComboBox, QGroupBox, QHBoxLay
     QVBoxLayout, QFormLayout, QLabel, QListWidgetItem
 
 from controllers.test_file_controller import TestFileController
-from utils.constants import AVAILABLE_CHANNELS
 from views.custom_dialogs_view import ChannelSetupDialog, ParamsSetupDialog
 
 
@@ -117,9 +116,9 @@ class CreateTestWindow(QWidget):
 
     def __show_param_setup_dialog(self, edit: bool = False):
         if edit:
-            item_id = get_selected_item_id(self.param_list_widget)
-            if item_id:
-                param = next((param for param in self.test_file_controller.params if param['id'] == item_id))
+            param_id = get_selected_item_id(self.param_list_widget)
+            if param_id:
+                param = self.test_file_controller.get_param(param_id)
                 dialog = ParamsSetupDialog(param, self)
                 if dialog.exec():
                     param.update(dialog.get_values())
@@ -127,35 +126,29 @@ class CreateTestWindow(QWidget):
         else:
             dialog = ParamsSetupDialog(None, self)
             if dialog.exec():
-                param = {"id": gen_id(), **dialog.get_values()}
-                self.test_file_controller.params.append(param)
+                self.test_file_controller.add_param(dialog.get_values())
                 self.__update_params_list()
 
     def __show_channel_setup_dialog(self, edit: bool = False):
-        channels = [channel for channel in AVAILABLE_CHANNELS if
-                    channel not in self.test_file_controller.active_channels.keys()]
+        channels = self.test_file_controller.get_available_channels()
         if edit:
-            item_id = get_selected_item_id(self.channel_list_widget)
-            if item_id:
-                label = self.test_file_controller.active_channels.get(item_id)
-                dialog = ChannelSetupDialog(channels, (item_id, label), self)
+            channel_id = get_selected_item_id(self.channel_list_widget)
+            if channel_id:
+                label = self.test_file_controller.active_channels.get(channel_id)
+                dialog = ChannelSetupDialog(channels, (channel_id, label), self)
             else:
                 return
         else:
             dialog = ChannelSetupDialog(channels, None, self)
 
         if dialog.exec():
-            channel_id, label = dialog.get_values()
-            self.test_file_controller.active_channels.update({channel_id: label})
+            self.test_file_controller.active_channels.update(**dialog.get_values())
             self.__update_channels_list()
 
     def __clone_param(self):
-        item_id = get_selected_item_id(self.param_list_widget)
-        if item_id:
-            param = next((param for param in self.test_file_controller.params if param['id'] == item_id))
-            new_param = param.copy()
-            new_param.update({"id": gen_id()})
-            self.test_file_controller.params.append(new_param)
+        param_id = get_selected_item_id(self.param_list_widget)
+        if param_id:
+            self.test_file_controller.clone_param(param_id)
             self.__update_params_list()
 
     def __remove_param(self):
@@ -165,9 +158,9 @@ class CreateTestWindow(QWidget):
         if not self.step_list_widget.count() == 0:  # TODO: Invertido, corrigir apos implementar STEPS
             print("STEPS")
         else:
-            item_id = get_selected_item_id(self.channel_list_widget)
-            if item_id:
-                self.test_file_controller.active_channels.pop(item_id)
+            channel_id = get_selected_item_id(self.channel_list_widget)
+            if channel_id:
+                self.test_file_controller.remove_channel(channel_id)
                 self.__update_channels_list()
 
     def __update_channels_list(self):

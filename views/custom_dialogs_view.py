@@ -30,11 +30,11 @@ class ChannelSetupDialog(QDialog):
         layout.addRow("Label:", self.channel_label)
         layout.addWidget(self.button_box)
 
-    def get_values(self) -> tuple[int, str]:
+    def get_values(self) -> dict[int, str]:
         if self.data:
-            return self.data[0], self.channel_label.text()
+            return {self.data[0]: self.channel_label.text()}
 
-        return int(self.channels_combobox.currentText()), self.channel_label.text()
+        return {int(self.channels_combobox.currentText()): self.channel_label.text()}
 
 
 def custom_double_spinbox(suffix: str) -> QDoubleSpinBox:
