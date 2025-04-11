@@ -6,9 +6,11 @@ class TestFileController:
         self.test_data: TestData = TestData()
         self.input_sources = []
         self.active_channels = {}
+        self.params = []
 
     # Teste
     def show_data(self):
         self.test_data.input_sources = [int(value) if value != '' else 0 for value in self.input_sources]
         self.test_data.channels = self.active_channels
+        self.test_data.params = self.params
         print(self.test_data)
