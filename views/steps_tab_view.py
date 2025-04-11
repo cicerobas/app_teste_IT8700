@@ -21,6 +21,7 @@ class StepsTabView(QWidget):
 
         # Components
         self.step_list_view = QListWidget()
+        self.step_list_view.setProperty("class", "custom_list")
         self.step_description_label = custom_info_label()
         self.step_type_label = custom_info_label()
         self.step_duration_label = custom_info_label()

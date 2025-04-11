@@ -27,27 +27,27 @@ QLineEdit:focus {
   border: 1px solid #3498db;
 }
 
-QListWidget {
+QListWidget.custom_list {
   background-color: #f9f9f9;
   border: 1px solid #ccc;
   padding: 4px;
-  font-size: 14px;
+  font-size: 20px;
   outline: none;
   border: 2px solid gray;
   border-radius: 5px;
 }
 
-QListWidget::item {
+QListWidget.custom_list::item {
   margin: 2px;
   border-radius: 4px;
   color: #333;
 }
 
-QListWidget::item:hover {
+QListWidget.custom_list::item:hover {
   background-color: #e6f0ff;
 }
 
-QListWidget::item:selected {
+QListWidget.custom_list::item:selected {
   background-color: #3399ff;
   color: white;
 }

@@ -15,3 +15,4 @@ ARDUINO_OUTPUT_PINS: dict[str, str] = {
     "9": "CC3",
     "10": "Buzzer",
 }
+AVAILABLE_CHANNELS = [1, 3, 4]

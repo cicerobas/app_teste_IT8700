@@ -1,7 +1,11 @@
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QCloseEvent, QIcon
+from PySide6.QtGui import QCloseEvent, QIcon, QIntValidator
 from PySide6.QtWidgets import QWidget, QLineEdit, QComboBox, QGroupBox, QHBoxLayout, QFrame, QPushButton, QListWidget, \
-    QVBoxLayout, QFormLayout, QLabel
+    QVBoxLayout, QFormLayout, QLabel, QListWidgetItem
+
+from controllers.test_file_controller import TestFileController
+from utils.constants import AVAILABLE_CHANNELS
+from views.custom_dialogs_view import ChannelSetupDialog
 
 
 def custom_separator(vertical: bool = False) -> QFrame:
@@ -32,10 +36,11 @@ class CreateTestWindow(QWidget):
     def __init__(self, parent: QWidget):
         super().__init__()
         self.parent_window = parent
+        self.test_file_controller = TestFileController()
         self.setWindowTitle("Create Test File")
 
         # Components
-        ##Fields
+        ## Fields
         self.group_field = QLineEdit()
         self.model_field = QLineEdit()
         self.customer_field = QLineEdit()
@@ -44,11 +49,15 @@ class CreateTestWindow(QWidget):
         self.v1_input_field = QLineEdit()
         self.v2_input_field = QLineEdit()
         self.v3_input_field = QLineEdit()
+        self.v1_input_field.setValidator(QIntValidator())
+        self.v2_input_field.setValidator(QIntValidator())
+        self.v3_input_field.setValidator(QIntValidator())
         ## Lists
         self.channel_list_widget = QListWidget()
         self.step_list_widget = QListWidget()
         self.param_list_widget = QListWidget()
-        ##Buttons
+        self.channel_list_widget.setProperty("class", "custom_list")
+        ## Buttons
         self.save_data_bt = custom_icon_button("save.svg", " SAVE")
         self.clear_data_bt = custom_icon_button("delete.svg", " CLEAR")
         self.add_channel_bt = custom_icon_button("add.svg")
@@ -66,8 +75,67 @@ class CreateTestWindow(QWidget):
         self.show_param_bt = custom_icon_button("eye.svg")
         self.remove_param_bt = custom_icon_button("minus.svg")
 
+        # Signals
+        self.save_data_bt.clicked.connect(self.save)
+        self.clear_data_bt.clicked.connect(self.show_data)  # Teste
+        self.add_channel_bt.clicked.connect(self.__show_channel_setup_dialog)
+        self.edit_channel_bt.clicked.connect(lambda: self.__show_channel_setup_dialog(True))
+        self.remove_channel_bt.clicked.connect(self.__remove_channel)
+
         # Layout
         self.setLayout(self.__setup_layout())
+
+    def save(self):
+        self.test_file_controller.test_data.group = self.group_field.text()
+        self.test_file_controller.test_data.model = self.model_field.text()
+        self.test_file_controller.test_data.customer = self.customer_field.text()
+        self.test_file_controller.test_data.input_type = self.input_type_field.currentText()
+        self.test_file_controller.input_sources = [self.v1_input_field.text(), self.v2_input_field.text(),
+                                                   self.v3_input_field.text()]
+
+    # Teste
+    def show_data(self):
+        self.test_file_controller.show_data()
+
+    def __show_channel_setup_dialog(self, edit: bool = False):
+        channels = [channel for channel in AVAILABLE_CHANNELS if
+                    channel not in self.test_file_controller.active_channels.keys()]
+        if edit:
+            item_id = self.__get_selected_item_id()
+            if item_id:
+                label = self.test_file_controller.active_channels.get(item_id)
+                dialog = ChannelSetupDialog(channels, (item_id, label), self)
+            else:
+                return
+        else:
+            dialog = ChannelSetupDialog(channels, None, self)
+
+        if dialog.exec():
+            channel_id, label = dialog.get_values()
+            self.test_file_controller.active_channels.update({channel_id: label})
+            self.__update_channels_list()
+
+    def __remove_channel(self):
+        if not self.step_list_widget.count() == 0:  # TODO: INVERTIDO, CORRIGIR APOS IMPLEMENTAR STEPS
+            print("STEPS")
+        else:
+            item_id = self.__get_selected_item_id()
+            if item_id:
+                self.test_file_controller.active_channels.pop(item_id)
+                self.__update_channels_list()
+
+    def __update_channels_list(self):
+        self.channel_list_widget.clear()
+        for channel_id, label in self.test_file_controller.active_channels.items():
+            item = QListWidgetItem(f"{channel_id} : {label}")
+            item.setData(Qt.ItemDataRole.UserRole, channel_id)
+            self.channel_list_widget.addItem(item)
+
+    def __get_selected_item_id(self) -> int | None:
+        item = self.channel_list_widget.currentItem()
+        if item:
+            return item.data(Qt.ItemDataRole.UserRole)
+        return None
 
     def __setup_layout(self) -> QHBoxLayout:
         h_main_layout = QHBoxLayout()

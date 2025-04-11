@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Dict
 
 
@@ -24,14 +24,14 @@ class Step:
 
 @dataclass
 class TestData:
-    group: str
-    model: str
-    customer: str
-    input_type: str
-    input_sources: List[int]
-    channels: Dict[int, str]
-    params: List[Param]
-    steps: List[Step]
+    group: str = ""
+    model: str = ""
+    customer: str = ""
+    input_type: str = ""
+    input_sources: List[int] = field(default_factory=list)
+    channels: Dict[int, str] = field(default_factory=dict)
+    params: List['Param'] = field(default_factory=list)
+    steps: List['Step'] = field(default_factory=list)
 
     def __post_init__(self):
         self.steps = [Step(**step) if isinstance(step, dict) else step for step in self.steps]
