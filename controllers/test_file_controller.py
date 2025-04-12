@@ -24,11 +24,14 @@ class TestFileController:
         self.test_data.steps = self.steps
         print(self.test_data)
 
+    def get_step(self, step_id: int):
+        return next((step for step in self.steps if step["id"] == step_id))
+
     def add_step(self, step_data: dict):
         self.steps.append({"id": gen_id(), **step_data})
 
-    def remove_step(self):
-        pass
+    def remove_step(self, step_id: int):
+        self.steps.remove(self.get_step(step_id))
 
     def clone_step(self):
         pass
@@ -56,7 +59,7 @@ class TestFileController:
         self.params.append({"id": gen_id(), **data})
 
     def remove_param(self, param_id: int):
-        self.params.remove(next((param for param in self.params if param['id'] == param_id)))
+        self.params.remove(self.get_param(param_id))
 
     def clone_param(self, param_id: int):
         param = self.get_param(param_id)

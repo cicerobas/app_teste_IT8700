@@ -92,6 +92,7 @@ class CreateTestWindow(QWidget):
         self.clone_param_bt.clicked.connect(self.__clone_param)
         self.remove_channel_bt.clicked.connect(self.__remove_channel)
         self.remove_param_bt.clicked.connect(self.__remove_param)
+        self.remove_step_bt.clicked.connect(self.__remove_step)
         self.add_param_bt.clicked.connect(self.__show_param_setup_dialog)
 
         # Layout
@@ -178,6 +179,12 @@ class CreateTestWindow(QWidget):
             if channel_id:
                 self.test_file_controller.remove_channel(channel_id)
                 self.__update_channels_list()
+
+    def __remove_step(self):
+        step_id = get_selected_item_id(self.step_list_widget)
+        if step_id:
+            self.test_file_controller.remove_step(step_id)
+            self.__update_steps_list()
 
     def __update_channels_list(self):
         self.channel_list_widget.clear()

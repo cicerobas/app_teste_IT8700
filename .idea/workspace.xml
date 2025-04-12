@@ -5,13 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="555fd9b4-b0fb-4e5e-a58c-0fd6716abb63" name="Changes" comment="-">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/icons/eye.svg" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/controllers/test_controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/test_controller.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/controllers/test_file_controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/test_file_controller.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/window_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/window_utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/views/create_test_window.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/create_test_window.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/views/custom_dialogs_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/custom_dialogs_view.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
