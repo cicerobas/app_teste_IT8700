@@ -33,8 +33,11 @@ class TestFileController:
     def remove_step(self, step_id: int):
         self.steps.remove(self.get_step(step_id))
 
-    def clone_step(self):
-        pass
+    def clone_step(self, step_id: int):
+        step = self.get_step(step_id)
+        new_step = step.copy()
+        new_step.update({"id": gen_id()})
+        self.steps.append(new_step)
 
     def move_step(self):
         pass

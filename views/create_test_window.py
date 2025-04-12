@@ -90,6 +90,7 @@ class CreateTestWindow(QWidget):
         self.edit_channel_bt.clicked.connect(lambda: self.__show_channel_setup_dialog(True))
         self.edit_param_bt.clicked.connect(lambda: self.__show_param_setup_dialog(True))
         self.clone_param_bt.clicked.connect(self.__clone_param)
+        self.clone_step_bt.clicked.connect(self.__clone_step)
         self.remove_channel_bt.clicked.connect(self.__remove_channel)
         self.remove_param_bt.clicked.connect(self.__remove_param)
         self.remove_step_bt.clicked.connect(self.__remove_step)
@@ -154,6 +155,12 @@ class CreateTestWindow(QWidget):
         if dialog.exec():
             self.test_file_controller.active_channels.update(dialog.get_values())
             self.__update_channels_list()
+
+    def __clone_step(self):
+        step_id = get_selected_item_id(self.step_list_widget)
+        if step_id:
+            self.test_file_controller.clone_step(step_id)
+            self.__update_steps_list()
 
     def __clone_param(self):
         param_id = get_selected_item_id(self.param_list_widget)
