@@ -13,6 +13,7 @@ from utils.constants import TEST_FILES_DIR
 from utils.delay_manager import DelayManager
 from utils.monitor_worker import MonitorWorker
 from utils.report_file_util import generate_report_file
+from utils.window_utils import show_custom_dialog
 from views.channel_monitor_view import ChannelMonitorView
 
 
@@ -28,21 +29,6 @@ class TestState(Enum):
 
 class WorkerSignals(QObject):
     update_output = Signal()
-
-
-def show_custom_dialog(text: str, message_type: QMessageBox.Icon) -> None:
-    dialog = QMessageBox()
-    dialog.setWindowTitle(
-        "INFO" if message_type == QMessageBox.Icon.Information else "ERROR"
-    )
-    dialog.setText(text)
-    dialog.setStandardButtons(
-        QMessageBox.StandardButton.Ok
-        if message_type == QMessageBox.Icon.Information
-        else QMessageBox.StandardButton.Close
-    )
-    dialog.setIcon(message_type)
-    dialog.exec()
 
 
 class TestController(QObject):

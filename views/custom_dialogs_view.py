@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDialog, QFormLayout, QComboBox, QLineEdit, QDialogButtonBox, QDoubleSpinBox, QGridLayout, \
-    QLabel
+    QLabel, QWidget, QHBoxLayout, QCheckBox
 
 
 class ChannelSetupDialog(QDialog):
@@ -92,3 +92,84 @@ class ParamsSetupDialog(QDialog):
     def get_values(self):
         return {'tag': self.tag_label.text(), 'va': self.va_field.value(), 'vb': self.vb_field.value(),
                 'ia': self.ia_field.value(), 'ib': self.ib_field.value()}
+
+
+class CustomChannelParamWidget(QWidget):
+    def __init__(self, channel_id: int, channel_label: str, params: list[dict]):
+        super().__init__()
+        self.channel_id = channel_id
+        self.channel_label = channel_label
+        self.params = params
+
+        # Components
+        self.enabled_checkbox = QCheckBox()
+        self.enabled_checkbox.setChecked(True)
+        self.channel_label = QLabel(f"{self.channel_id}: {self.channel_label}")
+        self.params_combobox = QComboBox()
+        self.params_combobox.addItems([param['tag'] for param in self.params])
+
+        layout = QHBoxLayout(self)
+        layout.addWidget(self.enabled_checkbox)
+        layout.addWidget(self.channel_label)
+        layout.addStretch(1)
+        layout.addWidget(self.params_combobox, alignment=Qt.AlignmentFlag.AlignRight)
+
+    def get_values(self) -> tuple[bool, int, int]:
+        param_id = self.params[self.params_combobox.currentIndex()].get("id")
+        return self.enabled_checkbox.isChecked(), self.channel_id, param_id
+
+
+class StepSetupDialog(QDialog):
+    def __init__(self, input_sources: list[str], input_type: str, channels: dict[int, str], params: list[dict],
+                 parent=None):
+        super().__init__(parent)
+        self.channels = channels
+        self.params = params
+
+        self.setWindowTitle("Steps")
+
+        # Components
+        self.channel_params = [CustomChannelParamWidget(channel_id, label, self.params) for channel_id, label in
+                               self.channels.items()]
+        self.step_type_combobox = QComboBox()
+        self.step_type_combobox.addItems(["1 - Direct Current", "2 - Current Limiting", "3 - Automatic Short"])
+        self.description_field = QLineEdit()
+        self.duration_field = custom_double_spinbox("s")
+        self.input_source_combox = QComboBox()
+        self.input_source_combox.addItems(
+            [f"{i + 1}: {value}V{input_type.lower()}" for i, value in enumerate(input_sources)])
+
+        # Buttons
+        self.button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel,
+            self,
+        )
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+
+        # Layout
+        layout = QFormLayout(self)
+        layout.addRow("Step Type:", self.step_type_combobox)
+        layout.addRow("Description:", self.description_field)
+        layout.addRow("Duration:", self.duration_field)
+        layout.addRow("Input Source:", self.input_source_combox)
+        layout.addRow(QLabel("Channel - Parameters"))
+        for channel_widget in self.channel_params:
+            layout.addRow(channel_widget)
+
+        layout.addWidget(self.button_box)
+
+    def get_values(self):
+        step_values = {
+            "step_type": self.step_type_combobox.currentIndex() + 1,
+            "description": self.description_field.text(),
+            "duration": self.duration_field.value(),
+            "input_source": self.input_source_combox.currentIndex(),
+            "channel_params": {}
+        }
+        for channel_widget in self.channel_params:
+            values = channel_widget.get_values()
+            if values[0]:
+                step_values["channel_params"].update({values[1]: values[2]})
+
+        return step_values

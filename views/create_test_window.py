@@ -1,16 +1,11 @@
-import time
-
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QCloseEvent, QIcon, QIntValidator
 from PySide6.QtWidgets import QWidget, QLineEdit, QComboBox, QGroupBox, QHBoxLayout, QFrame, QPushButton, QListWidget, \
-    QVBoxLayout, QFormLayout, QLabel, QListWidgetItem
+    QVBoxLayout, QFormLayout, QLabel, QListWidgetItem, QMessageBox
 
 from controllers.test_file_controller import TestFileController
-from views.custom_dialogs_view import ChannelSetupDialog, ParamsSetupDialog
-
-
-def gen_id() -> int:
-    return int(time.time() * 1000)
+from utils.window_utils import show_custom_dialog
+from views.custom_dialogs_view import ChannelSetupDialog, ParamsSetupDialog, StepSetupDialog
 
 
 def custom_separator(vertical: bool = False) -> QFrame:
@@ -81,7 +76,6 @@ class CreateTestWindow(QWidget):
         self.edit_step_bt = custom_icon_button("edit.svg")
         self.clone_step_bt = custom_icon_button("copy.svg")
         self.move_step_bt = custom_icon_button("swap.svg")
-        self.show_step_bt = custom_icon_button("eye.svg")
         self.remove_step_bt = custom_icon_button("minus.svg")
         self.add_param_bt = custom_icon_button("add.svg")
         self.edit_param_bt = custom_icon_button("edit.svg")
@@ -92,6 +86,7 @@ class CreateTestWindow(QWidget):
         self.save_data_bt.clicked.connect(self.save)
         self.clear_data_bt.clicked.connect(self.show_data)  # Teste
         self.add_channel_bt.clicked.connect(self.__show_channel_setup_dialog)
+        self.add_step_bt.clicked.connect(self.__show_step_setup_dialog)
         self.edit_channel_bt.clicked.connect(lambda: self.__show_channel_setup_dialog(True))
         self.edit_param_bt.clicked.connect(lambda: self.__show_param_setup_dialog(True))
         self.clone_param_bt.clicked.connect(self.__clone_param)
@@ -113,6 +108,20 @@ class CreateTestWindow(QWidget):
     # Teste
     def show_data(self):
         self.test_file_controller.show_data()
+
+    def __show_step_setup_dialog(self):
+        if self.channel_list_widget.count() == 0:
+            show_custom_dialog("Cannot add STEP: Channels setup list is empty.", QMessageBox.Icon.Warning)
+        elif self.param_list_widget.count() == 0:
+            show_custom_dialog("Cannot add STEP: Parameters list is empty.", QMessageBox.Icon.Warning)
+        else:
+            input_sources = [self.v1_input_field.text(), self.v2_input_field.text(), self.v3_input_field.text()]
+            input_type = self.input_type_field.currentText()
+            dialog = StepSetupDialog(input_sources, input_type, self.test_file_controller.active_channels,
+                                     self.test_file_controller.params, self)
+            if dialog.exec():
+                self.test_file_controller.add_step(dialog.get_values())
+                self.__update_steps_list()
 
     def __show_param_setup_dialog(self, edit: bool = False):
         if edit:
@@ -142,7 +151,7 @@ class CreateTestWindow(QWidget):
             dialog = ChannelSetupDialog(channels, None, self)
 
         if dialog.exec():
-            self.test_file_controller.active_channels.update(**dialog.get_values())
+            self.test_file_controller.active_channels.update(dialog.get_values())
             self.__update_channels_list()
 
     def __clone_param(self):
@@ -152,11 +161,18 @@ class CreateTestWindow(QWidget):
             self.__update_params_list()
 
     def __remove_param(self):
-        pass  # TODO: Implementar apos STEPS, verificar se alguma step usa o parametro antes de remover
+        param_id = get_selected_item_id(self.param_list_widget)
+        if param_id:
+            if self.test_file_controller.check_param_in_steps(param_id):
+                show_custom_dialog("Cannot be removed: The parameter is being used.",
+                                   QMessageBox.Icon.Warning)
+            else:
+                self.test_file_controller.remove_param(param_id)
+                self.__update_params_list()
 
     def __remove_channel(self):
-        if not self.step_list_widget.count() == 0:  # TODO: Invertido, corrigir apos implementar STEPS
-            print("STEPS")
+        if self.step_list_widget.count() != 0:
+            show_custom_dialog("Cannot be removed: Step list is not empty.", QMessageBox.Icon.Warning)
         else:
             channel_id = get_selected_item_id(self.channel_list_widget)
             if channel_id:
@@ -177,6 +193,13 @@ class CreateTestWindow(QWidget):
                 f"{param['tag']} | {param['va']}V | {param['vb']}V | {param['ia']}A | {param['ib']}A ")
             item.setData(Qt.ItemDataRole.UserRole, param['id'])
             self.param_list_widget.addItem(item)
+
+    def __update_steps_list(self):
+        self.step_list_widget.clear()
+        for index, step in enumerate(self.test_file_controller.steps):
+            item = QListWidgetItem(f"{index + 1} - {step['description']}")
+            item.setData(Qt.ItemDataRole.UserRole, step['id'])
+            self.step_list_widget.addItem(item)
 
     def __setup_layout(self) -> QHBoxLayout:
         h_main_layout = QHBoxLayout()
@@ -223,7 +246,6 @@ class CreateTestWindow(QWidget):
         ## Step Actions
         h_step_actions_layout = QHBoxLayout()
         h_step_actions_layout.addWidget(self.add_step_bt)
-        h_step_actions_layout.addWidget(self.show_step_bt)
         h_step_actions_layout.addWidget(self.edit_step_bt)
         h_step_actions_layout.addWidget(self.move_step_bt)
         h_step_actions_layout.addWidget(self.clone_step_bt)
