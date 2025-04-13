@@ -39,8 +39,10 @@ class TestFileController:
         new_step.update({"id": gen_id()})
         self.steps.append(new_step)
 
-    def move_step(self):
-        pass
+    def move_step(self, step_id: int, new_index: int):
+        index = self.steps.index(self.get_step(step_id))
+        step = self.steps.pop(index)
+        self.steps.insert(new_index - 1, step)
 
     def check_param_in_steps(self, param_id: int) -> bool:
         checked_steps = []

@@ -8,6 +8,7 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/controllers/test_file_controller.py" beforeDir="false" afterPath="$PROJECT_DIR$/controllers/test_file_controller.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/views/create_test_window.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/create_test_window.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/views/custom_dialogs_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/custom_dialogs_view.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,12 +36,12 @@
     &quot;assignee&quot;: &quot;cicerobas&quot;
   }
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/cicerobas/app_teste_IT8700.git&quot;,
-    &quot;accountId&quot;: &quot;d870b87a-3e90-46a4-97f0-0729f7752a78&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/cicerobas/app_teste_IT8700.git",
+    "accountId": "5a54367a-98b5-4277-95f9-fc3d00ceecec"
   }
-}</component>
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 3
 }</component>

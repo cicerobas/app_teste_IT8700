@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QWidget, QLineEdit, QComboBox, QGroupBox, QHBoxLay
 
 from controllers.test_file_controller import TestFileController
 from utils.window_utils import show_custom_dialog
-from views.custom_dialogs_view import ChannelSetupDialog, ParamsSetupDialog, StepSetupDialog
+from views.custom_dialogs_view import ChannelSetupDialog, ParamsSetupDialog, StepSetupDialog, StepPositionDialog
 
 
 def custom_separator(vertical: bool = False) -> QFrame:
@@ -91,6 +91,7 @@ class CreateTestWindow(QWidget):
         self.edit_param_bt.clicked.connect(lambda: self.__show_param_setup_dialog(True))
         self.clone_param_bt.clicked.connect(self.__clone_param)
         self.clone_step_bt.clicked.connect(self.__clone_step)
+        self.move_step_bt.clicked.connect(self.__move_step)
         self.remove_channel_bt.clicked.connect(self.__remove_channel)
         self.remove_param_bt.clicked.connect(self.__remove_param)
         self.remove_step_bt.clicked.connect(self.__remove_step)
@@ -155,6 +156,18 @@ class CreateTestWindow(QWidget):
         if dialog.exec():
             self.test_file_controller.active_channels.update(dialog.get_values())
             self.__update_channels_list()
+
+    def __move_step(self):
+        step_id = get_selected_item_id(self.step_list_widget)
+        if step_id:
+            index = self.step_list_widget.currentIndex().row() + 1
+            list_length = self.step_list_widget.count()
+            dialog = StepPositionDialog(index, list_length)
+            if dialog.exec():
+                new_index = dialog.get_values()
+                if new_index != index:
+                    self.test_file_controller.move_step(step_id, new_index)
+                    self.__update_steps_list()
 
     def __clone_step(self):
         step_id = get_selected_item_id(self.step_list_widget)

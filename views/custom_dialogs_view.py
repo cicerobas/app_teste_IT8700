@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDialog, QFormLayout, QComboBox, QLineEdit, QDialogButtonBox, QDoubleSpinBox, QGridLayout, \
-    QLabel, QWidget, QHBoxLayout, QCheckBox
+    QLabel, QWidget, QHBoxLayout, QCheckBox, QSpinBox
 
 
 class ChannelSetupDialog(QDialog):
@@ -173,3 +173,30 @@ class StepSetupDialog(QDialog):
                 step_values["channel_params"].update({values[1]: values[2]})
 
         return step_values
+
+
+class StepPositionDialog(QDialog):
+    def __init__(self, index: int, list_length: int, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Move the step")
+
+        # Components
+        self.position_spinbox = QSpinBox()
+        self.position_spinbox.setRange(1, list_length)
+        self.position_spinbox.setValue(index)
+
+        # Buttons
+        self.button_box = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel,
+            self,
+        )
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+
+        # Layout
+        layout = QFormLayout(self)
+        layout.addRow("New Position:", self.position_spinbox)
+        layout.addWidget(self.button_box)
+
+    def get_values(self):
+        return self.position_spinbox.value()
