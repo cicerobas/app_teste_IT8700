@@ -35,6 +35,7 @@ class TestController(QObject):
     state_changed = Signal(str)
     serial_number_updated = Signal(str)
     current_step_changed = Signal(str, float, int)
+    result_file_updated = Signal(str)
 
     def __init__(self, test_data: TestData):
         super().__init__()
@@ -74,9 +75,8 @@ class TestController(QObject):
         if self.state in [TestState.RUNNING, TestState.PAUSED, TestState.WAITKEY]:
             return
 
-        print("START")
-        # if not self.__check_instruments():
-        #     return
+        if not self.__check_instruments():
+            return
 
         if self.serial_number == "":
             self.__update_serial_number(self.serial_number_needs_increment)
@@ -138,7 +138,6 @@ class TestController(QObject):
         """
         if self.state not in [TestState.RUNNING, TestState.PAUSED, TestState.WAITKEY, TestState.NONE]:
             return
-        print("CANCEL")
         self.__update_state(TestState.CANCELED)
         self.reset_setup()
 
@@ -190,16 +189,12 @@ class TestController(QObject):
                 self.__update_state(TestState.FAILED if False in self.test_sequence_status else TestState.PASSED)
 
             self.temp_data_file = generate_report_file(self.test_result_data)
-            if self.state is TestState.FAILED:
-                print(self.__read_temp_data_file())
-
-            # if not self.is_single_step_test:  # TESTE
+            self.result_file_updated.emit(self.__read_temp_data_file())
             if self.state is TestState.PASSED and not self.is_single_step_test:
                 with open(file=f"{self.config.get(TEST_FILES_DIR)}/{self.test_data.group}/{self.serial_number}.txt",
                           mode="w", encoding="utf-8") as test_file:
                     test_file.write(self.__read_temp_data_file())
                 self.__update_serial_number(True)
-            print("DONE")
             self.__update_output_display()
             self.reset_setup()
 

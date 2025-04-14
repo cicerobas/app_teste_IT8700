@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QTabWid
 from controllers.test_controller import TestController, TestState
 from models.test_file_model import TestData
 from views.steps_tab_view import StepsTabView
+from views.test_result_tab_view import TestResultTabView
 from views.test_run_tab_view import TestRunTabView
 
 
@@ -16,7 +17,7 @@ class TestWindow(QWidget):
         self.test_controller = TestController(self.test_data)
         self.setWindowTitle("CEBRA IT8700")
 
-        #Signals
+        # Signals
         self.test_controller.state_changed.connect(self.__toggle_enabled_tabs)
 
         # Components
@@ -29,8 +30,10 @@ class TestWindow(QWidget):
         self.tabs = QTabWidget()
         self.test_run_tab = TestRunTabView(self.test_data, self.test_controller)
         self.test_steps_tab = StepsTabView(self.test_data, self.test_controller)
+        self.test_result_tab = TestResultTabView(self.test_controller)
         self.tabs.addTab(self.test_run_tab, "RUN")
         self.tabs.addTab(self.test_steps_tab, "STEPS")
+        self.tabs.addTab(self.test_result_tab, "RESULT")
 
         self.setLayout(self.__setup_layout())
 
