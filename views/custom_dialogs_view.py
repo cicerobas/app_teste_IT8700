@@ -143,6 +143,7 @@ class StepSetupDialog(QDialog):
                                self.channels.items()]
         self.step_type_combobox = QComboBox()
         self.step_type_combobox.addItems(["1 - Direct Current", "2 - Current Limiting", "3 - Automatic Short"])
+        self.step_type_combobox.currentIndexChanged.connect(self.__check_disable_duration_field)
         self.description_field = QLineEdit()
         self.duration_field = custom_double_spinbox("s")
         self.input_source_combox = QComboBox()
@@ -171,6 +172,13 @@ class StepSetupDialog(QDialog):
 
         if self.step:
             self.__set_step_values()
+
+    def __check_disable_duration_field(self):
+        if self.step_type_combobox.currentIndex() != 0:
+            self.duration_field.setValue(0)
+            self.duration_field.setEnabled(False)
+        else:
+            self.duration_field.setEnabled(True)
 
     def __set_step_values(self):
         self.step_type_combobox.setCurrentIndex(self.step.get("step_type") - 1)
