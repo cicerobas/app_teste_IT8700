@@ -22,7 +22,7 @@ class MainWindow(QWidget):
         center_window(self)
 
         self.config_window = ConfigWindow(self)
-        self.create_test_window = CreateTestWindow(self)
+        self.create_test_window = None
         self.test_window = None
 
         # LOGO
@@ -62,10 +62,6 @@ class MainWindow(QWidget):
         self.settings_button.clicked.connect(lambda: self.show_window(3))
 
     def show_file_load_dialog(self) -> str | None:
-        """
-        Exibe um diálogo para carregar um arquivo de teste (.yaml).
-        :return: Objeto referente ao arquivo carregado ou None.
-        """
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Open Test File...",
@@ -74,16 +70,7 @@ class MainWindow(QWidget):
         )
         return file_path or None
 
-
     def show_window(self, window_id: int) -> None:
-        """
-        Esconde a janela principal e exibe a janela correspondente.\n
-        * 0 -> TestViewWindow\n
-        * 1 -> TestEditWindow (CREATE)\n
-        * 2 -> TestEditWindow (UPDATE)
-        * 3 -> ConfigWindow
-        :param window_id: Identificador da janela a ser exibida.
-        """
         match window_id:
             case 0:
                 file_path = self.show_file_load_dialog()
@@ -96,8 +83,8 @@ class MainWindow(QWidget):
                     self.test_window.showMaximized()
             case 1:
                 self.hide()
+                self.create_test_window = CreateTestWindow(self)
                 self.create_test_window.showMaximized()
             case 3:
                 self.hide()
                 self.config_window.show()
-

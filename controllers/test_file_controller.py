@@ -1,4 +1,7 @@
 import time
+from dataclasses import asdict
+
+import yaml
 
 from models.test_file_model import TestData
 from utils.constants import AVAILABLE_CHANNELS
@@ -16,13 +19,18 @@ class TestFileController:
         self.params = []
         self.steps = []
 
-    # Teste
-    def show_data(self):
+    def save_data(self, directory_path: str) -> str:
         self.test_data.input_sources = [int(value) if value != '' else 0 for value in self.input_sources]
         self.test_data.channels = self.active_channels
         self.test_data.params = self.params
         self.test_data.steps = self.steps
-        print(self.test_data)
+
+        test_data_dict = asdict(self.test_data)
+        file_path = f"{directory_path}/{self.test_data.group}.yaml"
+        with open(file_path, 'w', encoding='utf-8') as file:
+            yaml.dump(test_data_dict, file, allow_unicode=True, default_flow_style=False, sort_keys=False)
+
+        return f"File saved in: {file_path}"
 
     def get_step(self, step_id: int):
         return next((step for step in self.steps if step["id"] == step_id))

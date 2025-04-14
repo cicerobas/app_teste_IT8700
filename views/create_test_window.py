@@ -1,9 +1,11 @@
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QCloseEvent, QIcon, QIntValidator
 from PySide6.QtWidgets import QWidget, QLineEdit, QComboBox, QGroupBox, QHBoxLayout, QFrame, QPushButton, QListWidget, \
-    QVBoxLayout, QFormLayout, QLabel, QListWidgetItem, QMessageBox
+    QVBoxLayout, QFormLayout, QLabel, QListWidgetItem, QMessageBox, QFileDialog
 
 from controllers.test_file_controller import TestFileController
+from utils.config_manager import ConfigManager
+from utils.constants import TEST_FILES_DIR
 from utils.window_utils import show_custom_dialog
 from views.custom_dialogs_view import ChannelSetupDialog, ParamsSetupDialog, StepSetupDialog, StepPositionDialog
 
@@ -44,6 +46,7 @@ class CreateTestWindow(QWidget):
         super().__init__()
         self.parent_window = parent
         self.test_file_controller = TestFileController()
+        self.config = ConfigManager()
         self.setWindowTitle("Create Test File")
 
         # Components
@@ -83,7 +86,7 @@ class CreateTestWindow(QWidget):
         self.remove_param_bt = custom_icon_button("minus.svg")
 
         # Signals
-        self.save_data_bt.clicked.connect(self.save)
+        self.save_data_bt.clicked.connect(self.__save_test_data)
         self.clear_data_bt.clicked.connect(self.__clear_fields)
         self.add_channel_bt.clicked.connect(self.__show_channel_setup_dialog)
         self.add_step_bt.clicked.connect(self.__show_step_setup_dialog)
@@ -101,14 +104,23 @@ class CreateTestWindow(QWidget):
         # Layout
         self.setLayout(self.__setup_layout())
 
-    def save(self):
-        self.test_file_controller.test_data.group = self.group_field.text()
-        self.test_file_controller.test_data.model = self.model_field.text()
-        self.test_file_controller.test_data.customer = self.customer_field.text()
-        self.test_file_controller.test_data.input_type = self.input_type_field.currentText()
-        self.test_file_controller.input_sources = [self.v1_input_field.text(), self.v2_input_field.text(),
-                                                   self.v3_input_field.text()]
-        self.test_file_controller.show_data()
+    def __save_test_data(self):
+        if self.group_field.text() == "":
+            show_custom_dialog("The GROUP field is required.", QMessageBox.Icon.Critical)
+        elif self.step_list_widget.count() == 0:
+            show_custom_dialog("At least 1 STEP is required.", QMessageBox.Icon.Critical)
+        else:
+            directory = QFileDialog.getExistingDirectory(self, "Select a Directory", self.config.get(TEST_FILES_DIR))
+            if directory:
+                self.test_file_controller.test_data.group = self.group_field.text()
+                self.test_file_controller.test_data.model = self.model_field.text()
+                self.test_file_controller.test_data.customer = self.customer_field.text()
+                self.test_file_controller.test_data.input_type = self.input_type_field.currentText()
+                self.test_file_controller.input_sources = [self.v1_input_field.text(), self.v2_input_field.text(),
+                                                           self.v3_input_field.text()]
+                confirmation = self.test_file_controller.save_data(directory)
+                show_custom_dialog(confirmation, QMessageBox.Icon.Information)
+                self.close()
 
     def __clear_fields(self):
         confirmation = QMessageBox.question(
