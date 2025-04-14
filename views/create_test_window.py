@@ -42,9 +42,11 @@ def get_selected_item_id(list_widget: QListWidget) -> int | None:
 
 
 class CreateTestWindow(QWidget):
-    def __init__(self, parent: QWidget):
+    def __init__(self, parent: QWidget, is_editing: bool = False, editing_file_path: str = ""):
         super().__init__()
         self.parent_window = parent
+        self.is_editing = is_editing
+        self.editing_file_path = editing_file_path
         self.test_file_controller = TestFileController()
         self.config = ConfigManager()
         self.setWindowTitle("Create Test File")
@@ -101,8 +103,24 @@ class CreateTestWindow(QWidget):
         self.remove_step_bt.clicked.connect(self.__remove_step)
         self.add_param_bt.clicked.connect(self.__show_param_setup_dialog)
 
+        if self.is_editing:
+            self.test_file_controller.load_file_data(self.editing_file_path)
+            self.__set_editing_field_values()
+
         # Layout
         self.setLayout(self.__setup_layout())
+
+    def __set_editing_field_values(self):
+        self.group_field.setText(self.test_file_controller.test_data.group)
+        self.model_field.setText(self.test_file_controller.test_data.model)
+        self.customer_field.setText(self.test_file_controller.test_data.customer)
+        self.input_type_field.setCurrentIndex(0 if self.test_file_controller.test_data.input_type == 'CC' else 1)
+        self.v1_input_field.setText(str(self.test_file_controller.test_data.input_sources[0]))
+        self.v2_input_field.setText(str(self.test_file_controller.test_data.input_sources[1]))
+        self.v3_input_field.setText(str(self.test_file_controller.test_data.input_sources[2]))
+        self.__update_channels_list()
+        self.__update_params_list()
+        self.__update_steps_list()
 
     def __save_test_data(self):
         if self.group_field.text() == "":
@@ -110,17 +128,23 @@ class CreateTestWindow(QWidget):
         elif self.step_list_widget.count() == 0:
             show_custom_dialog("At least 1 STEP is required.", QMessageBox.Icon.Critical)
         else:
-            directory = QFileDialog.getExistingDirectory(self, "Select a Directory", self.config.get(TEST_FILES_DIR))
-            if directory:
-                self.test_file_controller.test_data.group = self.group_field.text()
-                self.test_file_controller.test_data.model = self.model_field.text()
-                self.test_file_controller.test_data.customer = self.customer_field.text()
-                self.test_file_controller.test_data.input_type = self.input_type_field.currentText()
-                self.test_file_controller.input_sources = [self.v1_input_field.text(), self.v2_input_field.text(),
-                                                           self.v3_input_field.text()]
-                confirmation = self.test_file_controller.save_data(directory)
+            self.test_file_controller.test_data.group = self.group_field.text()
+            self.test_file_controller.test_data.model = self.model_field.text()
+            self.test_file_controller.test_data.customer = self.customer_field.text()
+            self.test_file_controller.test_data.input_type = self.input_type_field.currentText()
+            self.test_file_controller.input_sources = [self.v1_input_field.text(), self.v2_input_field.text(),
+                                                       self.v3_input_field.text()]
+            if self.is_editing:
+                confirmation = self.test_file_controller.save_data("", True)
                 show_custom_dialog(confirmation, QMessageBox.Icon.Information)
                 self.close()
+            else:
+                directory = QFileDialog.getExistingDirectory(self, "Select a Directory",
+                                                             self.config.get(TEST_FILES_DIR))
+                if directory:
+                    confirmation = self.test_file_controller.save_data(directory)
+                    show_custom_dialog(confirmation, QMessageBox.Icon.Information)
+                    self.close()
 
     def __clear_fields(self):
         confirmation = QMessageBox.question(

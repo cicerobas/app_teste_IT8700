@@ -52,23 +52,23 @@
     <option name="showExcludedFiles" value="false" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Python.ex (1).executor&quot;: &quot;Run&quot;,
-    &quot;Python.ex.executor&quot;: &quot;Run&quot;,
-    &quot;Python.ex2.executor&quot;: &quot;Run&quot;,
-    &quot;Python.exemplo.executor&quot;: &quot;Run&quot;,
-    &quot;Python.main.executor&quot;: &quot;Run&quot;,
-    &quot;Python.test_file_controller.executor&quot;: &quot;Run&quot;,
-    &quot;Python.test_run_tab_view.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;deletionFromPopupRequiresConfirmation&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feat/create__test__file&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/cebra/PycharmProjects/app_teste_IT8700/utils&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.ex (1).executor": "Run",
+    "Python.ex.executor": "Run",
+    "Python.ex2.executor": "Run",
+    "Python.exemplo.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.test_file_controller.executor": "Run",
+    "Python.test_run_tab_view.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "deletionFromPopupRequiresConfirmation": "false",
+    "git-widget-placeholder": "feat/edit__test__file",
+    "last_opened_file_path": "/home/cebra/PycharmProjects/app_teste_IT8700/utils",
+    "settings.editor.selected.configurable": "preferences.pluginManager"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/utils" />

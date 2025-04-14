@@ -1,3 +1,4 @@
+import os
 import time
 from dataclasses import asdict
 
@@ -14,19 +15,32 @@ def gen_id() -> int:
 class TestFileController:
     def __init__(self):
         self.test_data: TestData = TestData()
+        self.editing_file_path = ""
         self.input_sources = []
         self.active_channels = {}
         self.params = []
         self.steps = []
 
-    def save_data(self, directory_path: str) -> str:
+    def load_file_data(self, file_path: str):
+        with open(file_path, "r", encoding="utf-8") as file:
+            data = yaml.safe_load(file)
+        self.test_data = TestData(**data)
+        self.editing_file_path = file_path
+        for step in self.test_data.steps:
+            self.steps.append(asdict(step))
+        for param in self.test_data.params:
+            self.params.append(asdict(param))
+        self.active_channels = self.test_data.channels
+        self.input_sources = self.test_data.input_sources
+
+    def save_data(self, directory_path: str, is_editing: bool = False) -> str:
         self.test_data.input_sources = [int(value) if value != '' else 0 for value in self.input_sources]
         self.test_data.channels = self.active_channels
         self.test_data.params = self.params
         self.test_data.steps = self.steps
 
         test_data_dict = asdict(self.test_data)
-        file_path = f"{directory_path}/{self.test_data.group}.yaml"
+        file_path = f"{os.path.dirname(self.editing_file_path) if is_editing else directory_path}/{self.test_data.group}.yaml"
         with open(file_path, 'w', encoding='utf-8') as file:
             yaml.dump(test_data_dict, file, allow_unicode=True, default_flow_style=False, sort_keys=False)
 
