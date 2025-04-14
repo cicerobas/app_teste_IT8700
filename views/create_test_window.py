@@ -84,7 +84,7 @@ class CreateTestWindow(QWidget):
 
         # Signals
         self.save_data_bt.clicked.connect(self.save)
-        self.clear_data_bt.clicked.connect(self.show_data)  # Teste
+        self.clear_data_bt.clicked.connect(self.__clear_fields)
         self.add_channel_bt.clicked.connect(self.__show_channel_setup_dialog)
         self.add_step_bt.clicked.connect(self.__show_step_setup_dialog)
         self.edit_channel_bt.clicked.connect(lambda: self.__show_channel_setup_dialog(True))
@@ -108,10 +108,29 @@ class CreateTestWindow(QWidget):
         self.test_file_controller.test_data.input_type = self.input_type_field.currentText()
         self.test_file_controller.input_sources = [self.v1_input_field.text(), self.v2_input_field.text(),
                                                    self.v3_input_field.text()]
-
-    # Teste
-    def show_data(self):
         self.test_file_controller.show_data()
+
+    def __clear_fields(self):
+        confirmation = QMessageBox.question(
+            self,
+            "Confirm Action",
+            "Are you sure you want to clear all fields?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if confirmation == QMessageBox.StandardButton.Yes:
+            self.group_field.setText("")
+            self.model_field.setText("")
+            self.customer_field.setText("")
+            self.input_type_field.setCurrentIndex(0)
+            self.v1_input_field.setText("")
+            self.v2_input_field.setText("")
+            self.v3_input_field.setText("")
+            self.test_file_controller = TestFileController()
+            self.__update_channels_list()
+            self.__update_params_list()
+            self.__update_steps_list()
 
     def __show_step_setup_dialog(self, edit: bool = False):
         input_sources = [self.v1_input_field.text(), self.v2_input_field.text(), self.v3_input_field.text()]
