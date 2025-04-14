@@ -114,6 +114,14 @@ class CustomChannelParamWidget(QWidget):
         layout.addStretch(1)
         layout.addWidget(self.params_combobox, alignment=Qt.AlignmentFlag.AlignRight)
 
+    def set_values(self, checked: bool, param_id: int | None):
+        if checked:
+            self.enabled_checkbox.setChecked(True)
+            index = self.params.index(next((param for param in self.params if param['id'] == param_id)))
+            self.params_combobox.setCurrentIndex(index)
+        else:
+            self.enabled_checkbox.setChecked(False)
+
     def get_values(self) -> tuple[bool, int, int]:
         param_id = self.params[self.params_combobox.currentIndex()].get("id")
         return self.enabled_checkbox.isChecked(), self.channel_id, param_id
@@ -121,10 +129,12 @@ class CustomChannelParamWidget(QWidget):
 
 class StepSetupDialog(QDialog):
     def __init__(self, input_sources: list[str], input_type: str, channels: dict[int, str], params: list[dict],
+                 step: dict | None,
                  parent=None):
         super().__init__(parent)
         self.channels = channels
         self.params = params
+        self.step = step
 
         self.setWindowTitle("Steps")
 
@@ -158,6 +168,21 @@ class StepSetupDialog(QDialog):
             layout.addRow(channel_widget)
 
         layout.addWidget(self.button_box)
+
+        if self.step:
+            self.__set_step_values()
+
+    def __set_step_values(self):
+        self.step_type_combobox.setCurrentIndex(self.step.get("step_type") - 1)
+        self.description_field.setText(self.step.get("description"))
+        self.duration_field.setValue(self.step.get("duration"))
+        self.input_source_combox.setCurrentIndex(self.step.get("input_source"))
+        channel_params_dict = self.step.get("channel_params")
+        for channel_widget in self.channel_params:
+            if channel_widget.channel_id in channel_params_dict.keys():
+                channel_widget.set_values(True, channel_params_dict.get(channel_widget.channel_id))
+            else:
+                channel_widget.set_values(False, None)
 
     def get_values(self):
         step_values = {

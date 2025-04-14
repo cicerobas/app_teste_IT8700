@@ -89,6 +89,7 @@ class CreateTestWindow(QWidget):
         self.add_step_bt.clicked.connect(self.__show_step_setup_dialog)
         self.edit_channel_bt.clicked.connect(lambda: self.__show_channel_setup_dialog(True))
         self.edit_param_bt.clicked.connect(lambda: self.__show_param_setup_dialog(True))
+        self.edit_step_bt.clicked.connect(lambda: self.__show_step_setup_dialog(True))
         self.clone_param_bt.clicked.connect(self.__clone_param)
         self.clone_step_bt.clicked.connect(self.__clone_step)
         self.move_step_bt.clicked.connect(self.__move_step)
@@ -112,19 +113,29 @@ class CreateTestWindow(QWidget):
     def show_data(self):
         self.test_file_controller.show_data()
 
-    def __show_step_setup_dialog(self):
-        if self.channel_list_widget.count() == 0:
-            show_custom_dialog("Cannot add STEP: Channels setup list is empty.", QMessageBox.Icon.Warning)
-        elif self.param_list_widget.count() == 0:
-            show_custom_dialog("Cannot add STEP: Parameters list is empty.", QMessageBox.Icon.Warning)
+    def __show_step_setup_dialog(self, edit: bool = False):
+        input_sources = [self.v1_input_field.text(), self.v2_input_field.text(), self.v3_input_field.text()]
+        input_type = self.input_type_field.currentText()
+        if edit:
+            step_id = get_selected_item_id(self.step_list_widget)
+            if step_id:
+                step = self.test_file_controller.get_step(step_id)
+                dialog = StepSetupDialog(input_sources, input_type, self.test_file_controller.active_channels,
+                                         self.test_file_controller.params, step, self)
+                if dialog.exec():
+                    step.update(dialog.get_values())
+                    self.__update_steps_list()
         else:
-            input_sources = [self.v1_input_field.text(), self.v2_input_field.text(), self.v3_input_field.text()]
-            input_type = self.input_type_field.currentText()
-            dialog = StepSetupDialog(input_sources, input_type, self.test_file_controller.active_channels,
-                                     self.test_file_controller.params, self)
-            if dialog.exec():
-                self.test_file_controller.add_step(dialog.get_values())
-                self.__update_steps_list()
+            if self.channel_list_widget.count() == 0:
+                show_custom_dialog("Cannot add STEP: Channels setup list is empty.", QMessageBox.Icon.Warning)
+            elif self.param_list_widget.count() == 0:
+                show_custom_dialog("Cannot add STEP: Parameters list is empty.", QMessageBox.Icon.Warning)
+            else:
+                dialog = StepSetupDialog(input_sources, input_type, self.test_file_controller.active_channels,
+                                         self.test_file_controller.params, None, self)
+                if dialog.exec():
+                    self.test_file_controller.add_step(dialog.get_values())
+                    self.__update_steps_list()
 
     def __show_param_setup_dialog(self, edit: bool = False):
         if edit:
