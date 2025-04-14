@@ -216,6 +216,7 @@ class TestController(QObject):
         return ""
 
     def __handle_short_test_step(self, current_step: Step):
+        self.__update_state(TestState.NONE)
         channels_data = []
         for channel_id, param_id in current_step.channel_params.items():
             channels_data.append({'id': channel_id, 'param_id': param_id, 'shutdown': False, 'recovery': False})
@@ -255,6 +256,7 @@ class TestController(QObject):
 
     def __validate_short_test_step(self, data: list[dict]):
         step_pass = False
+        channels_pass = []
         current_step_data = []
         current_step = self.test_data.steps[
             self.single_step_index if self.is_single_step_test else self.current_step_index]
@@ -269,8 +271,10 @@ class TestController(QObject):
                     "voltage_ref": channel_params.va,
                     "load": channel_params.ia
                 }
+                channels_pass.append(channel["shutdown"] and channel["recovery"])
+
+            step_pass = False not in channels_pass
             current_step_data.append(channel_data)
-            step_pass = channel["shutdown"] and channel["recovery"]
             self.test_sequence_status.append(step_pass)
 
         self.__handle_test_results_data(current_step, tuple(current_step_data), step_pass)
@@ -344,6 +348,7 @@ class TestController(QObject):
 
     def __validate_current_limiting_step_values(self, data: list[dict]):
         step_pass = False
+        channels_pass = []
         current_step_data = []
         current_step = self.test_data.steps[
             self.single_step_index if self.is_single_step_test else self.current_step_index]
@@ -358,14 +363,17 @@ class TestController(QObject):
                     "load_lower": channel_params.ia,
                     "load": channel["limit"]
                 }
-                step_pass = True if channel_params.ia <= channel["limit"] <= channel_params.ib else False
-                self.test_sequence_status.append(step_pass)
+                channels_pass.append(True if channel_params.ia <= channel["limit"] <= channel_params.ib else False)
 
+            step_pass = False not in channels_pass
+            self.test_sequence_status.append(step_pass)
             current_step_data.append(channel_data)
+
         self.__handle_test_results_data(current_step, tuple(current_step_data), step_pass)
 
     def __validate_direct_current_step_values(self):
         step_pass = False
+        channels_pass = []
         current_step_data = []
         current_step = self.test_data.steps[
             self.single_step_index if self.is_single_step_test else self.current_step_index]
@@ -384,9 +392,11 @@ class TestController(QObject):
                     "power": values.get("power", 0.0)
                 }
 
-            step_pass = True if channel_params.va <= values.get("voltage", 0.0) <= channel_params.vb else False
-            self.test_sequence_status.append(step_pass)
+                channels_pass.append(
+                    True if channel_params.va <= values.get("voltage", 0.0) <= channel_params.vb else False)
 
+            step_pass = False not in channels_pass
+            self.test_sequence_status.append(step_pass)
             current_step_data.append(channel_data)
 
         self.__handle_test_results_data(current_step, tuple(current_step_data), step_pass)

@@ -39,7 +39,7 @@ class TestWindow(QWidget):
 
     @Slot()
     def __toggle_enabled_tabs(self):
-        enable = self.test_controller.state not in [TestState.RUNNING, TestState.PAUSED, TestState.WAITKEY]
+        enable = self.test_controller.state not in [TestState.RUNNING, TestState.PAUSED, TestState.WAITKEY, TestState.NONE]
         for index in range(self.tabs.count()):
             if index != 0:
                 self.tabs.setTabEnabled(index, enable)
