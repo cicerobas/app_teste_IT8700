@@ -1,7 +1,8 @@
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QCloseEvent, QIcon, QIntValidator
 from PySide6.QtWidgets import QWidget, QLineEdit, QComboBox, QGroupBox, QHBoxLayout, QFrame, QPushButton, QListWidget, \
-    QVBoxLayout, QFormLayout, QLabel, QListWidgetItem, QMessageBox, QFileDialog
+    QVBoxLayout, QFormLayout, QLabel, QListWidgetItem, QMessageBox, QFileDialog, QTableWidget, QTableWidgetItem, \
+    QAbstractItemView, QHeaderView
 
 from controllers.test_file_controller import TestFileController
 from utils.config_manager import ConfigManager
@@ -34,10 +35,16 @@ def custom_groupbox(title: str, max_width: int | None = None) -> QGroupBox:
     return groupbox
 
 
-def get_selected_item_id(list_widget: QListWidget) -> int | None:
-    item = list_widget.currentItem()
-    if item:
-        return item.data(Qt.ItemDataRole.UserRole)
+def get_selected_item_id(data_widget) -> int | None:
+    if isinstance(data_widget, QListWidget):
+        item = data_widget.currentItem()
+        if item:
+            return item.data(Qt.ItemDataRole.UserRole)
+    elif isinstance(data_widget, QTableWidget):
+        item = data_widget.item(data_widget.currentRow(), 0)
+        if item:
+            return item.data(Qt.ItemDataRole.UserRole)
+
     return None
 
 
@@ -67,10 +74,11 @@ class CreateTestWindow(QWidget):
         ## Lists
         self.channel_list_widget = QListWidget()
         self.step_list_widget = QListWidget()
-        self.param_list_widget = QListWidget()
+        self.params_table = QTableWidget()
+        self.__setup_params_table()
+
         self.channel_list_widget.setProperty("class", "custom_list")
         self.step_list_widget.setProperty("class", "custom_list")
-        self.param_list_widget.setProperty("class", "custom_list")
         ## Buttons
         self.save_data_bt = custom_icon_button("save.svg", " SAVE")
         self.clear_data_bt = custom_icon_button("delete.svg", " CLEAR")
@@ -110,6 +118,17 @@ class CreateTestWindow(QWidget):
         # Layout
         self.setLayout(self.__setup_layout())
 
+    def __setup_params_table(self):
+        self.params_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.params_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.params_table.setColumnCount(5)
+        self.params_table.setHorizontalHeaderLabels(["Tag", "Va (V)", "Vb (V)", "Ia (A)", "Ib (A)"])
+        self.params_table.verticalHeader().setVisible(False)
+        self.params_table.setColumnWidth(0, 100)
+        self.params_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Fixed)
+        for col in range(1, self.params_table.columnCount()):
+            self.params_table.horizontalHeader().setSectionResizeMode(col, QHeaderView.ResizeMode.Stretch)
+
     def __set_editing_field_values(self):
         self.group_field.setText(self.test_file_controller.test_data.group)
         self.model_field.setText(self.test_file_controller.test_data.model)
@@ -119,7 +138,7 @@ class CreateTestWindow(QWidget):
         self.v2_input_field.setText(str(self.test_file_controller.test_data.input_sources[1]))
         self.v3_input_field.setText(str(self.test_file_controller.test_data.input_sources[2]))
         self.__update_channels_list()
-        self.__update_params_list()
+        self.__update_params_table()
         self.__update_steps_list()
 
     def __save_test_data(self):
@@ -165,7 +184,7 @@ class CreateTestWindow(QWidget):
             self.v3_input_field.setText("")
             self.test_file_controller = TestFileController()
             self.__update_channels_list()
-            self.__update_params_list()
+            self.__update_params_table()
             self.__update_steps_list()
 
     def __show_step_setup_dialog(self, edit: bool = False):
@@ -183,7 +202,7 @@ class CreateTestWindow(QWidget):
         else:
             if self.channel_list_widget.count() == 0:
                 show_custom_dialog("Cannot add STEP: Channels setup list is empty.", QMessageBox.Icon.Warning)
-            elif self.param_list_widget.count() == 0:
+            elif self.params_table.rowCount() == 0:
                 show_custom_dialog("Cannot add STEP: Parameters list is empty.", QMessageBox.Icon.Warning)
             else:
                 dialog = StepSetupDialog(input_sources, input_type, self.test_file_controller.active_channels,
@@ -194,18 +213,19 @@ class CreateTestWindow(QWidget):
 
     def __show_param_setup_dialog(self, edit: bool = False):
         if edit:
-            param_id = get_selected_item_id(self.param_list_widget)
+            param_id = get_selected_item_id(self.params_table)
             if param_id:
                 param = self.test_file_controller.get_param(param_id)
                 dialog = ParamsSetupDialog(param, self)
                 if dialog.exec():
                     param.update(dialog.get_values())
-                    self.__update_params_list()
+                    self.__update_params_table()
         else:
             dialog = ParamsSetupDialog(None, self)
             if dialog.exec():
                 self.test_file_controller.add_param(dialog.get_values())
-                self.__update_params_list()
+                self.__update_params_table()
+                self.__update_params_table()
 
     def __show_channel_setup_dialog(self, edit: bool = False):
         channels = self.test_file_controller.get_available_channels()
@@ -242,20 +262,20 @@ class CreateTestWindow(QWidget):
             self.__update_steps_list()
 
     def __clone_param(self):
-        param_id = get_selected_item_id(self.param_list_widget)
+        param_id = get_selected_item_id(self.params_table)
         if param_id:
             self.test_file_controller.clone_param(param_id)
-            self.__update_params_list()
+            self.__update_params_table()
 
     def __remove_param(self):
-        param_id = get_selected_item_id(self.param_list_widget)
+        param_id = get_selected_item_id(self.params_table)
         if param_id:
             if self.test_file_controller.check_param_in_steps(param_id):
                 show_custom_dialog("Cannot be removed: The parameter is being used.",
                                    QMessageBox.Icon.Warning)
             else:
                 self.test_file_controller.remove_param(param_id)
-                self.__update_params_list()
+                self.__update_params_table()
 
     def __remove_channel(self):
         if self.step_list_widget.count() != 0:
@@ -279,13 +299,17 @@ class CreateTestWindow(QWidget):
             item.setData(Qt.ItemDataRole.UserRole, channel_id)
             self.channel_list_widget.addItem(item)
 
-    def __update_params_list(self):
-        self.param_list_widget.clear()
-        for param in self.test_file_controller.params:
-            item = QListWidgetItem(
-                f"{param['tag']} | {param['va']}V | {param['vb']}V | {param['ia']}A | {param['ib']}A ")
+    def __update_params_table(self):
+        self.params_table.setRowCount(0)
+        self.params_table.setRowCount(len(self.test_file_controller.params))
+        for row, param in enumerate(self.test_file_controller.params):
+            item = QTableWidgetItem(str(param["tag"]))
             item.setData(Qt.ItemDataRole.UserRole, param['id'])
-            self.param_list_widget.addItem(item)
+            self.params_table.setItem(row, 0, item)
+            self.params_table.setItem(row, 1, QTableWidgetItem(f"{param['va']}"))
+            self.params_table.setItem(row, 2, QTableWidgetItem(f"{param['vb']}"))
+            self.params_table.setItem(row, 3, QTableWidgetItem(f"{param['ia']}"))
+            self.params_table.setItem(row, 4, QTableWidgetItem(f"{param['ib']}"))
 
     def __update_steps_list(self):
         self.step_list_widget.clear()
@@ -357,7 +381,7 @@ class CreateTestWindow(QWidget):
         h_param_actions_layout.addWidget(self.remove_param_bt)
 
         v_params_container_layout.addLayout(h_param_actions_layout)
-        v_params_container_layout.addWidget(self.param_list_widget)
+        v_params_container_layout.addWidget(self.params_table)
 
         # Main
         h_main_layout.addWidget(test_details_groupbox)
