@@ -4,8 +4,9 @@ from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QTabWid
 
 from controllers.test_controller import TestController, TestState
 from models.test_file_model import TestData
+from views.details_tab_view import DetailsTabView
+from views.result_tab_view import TestResultTabView
 from views.steps_tab_view import StepsTabView
-from views.test_result_tab_view import TestResultTabView
 from views.test_run_tab_view import TestRunTabView
 
 
@@ -29,17 +30,20 @@ class TestWindow(QWidget):
         ## Tabs
         self.tabs = QTabWidget()
         self.test_run_tab = TestRunTabView(self.test_data, self.test_controller)
-        self.test_steps_tab = StepsTabView(self.test_data, self.test_controller)
-        self.test_result_tab = TestResultTabView(self.test_controller)
+        self.steps_tab = StepsTabView(self.test_data, self.test_controller)
+        self.result_tab = TestResultTabView(self.test_controller)
+        self.details_tab = DetailsTabView(self.test_data, self.test_controller)
         self.tabs.addTab(self.test_run_tab, "RUN")
-        self.tabs.addTab(self.test_steps_tab, "STEPS")
-        self.tabs.addTab(self.test_result_tab, "RESULT")
+        self.tabs.addTab(self.steps_tab, "STEPS")
+        self.tabs.addTab(self.result_tab, "RESULT")
+        self.tabs.addTab(self.details_tab, "DETAILS")
 
         self.setLayout(self.__setup_layout())
 
     @Slot()
     def __toggle_enabled_tabs(self):
-        enable = self.test_controller.state not in [TestState.RUNNING, TestState.PAUSED, TestState.WAITKEY, TestState.NONE]
+        enable = self.test_controller.state not in [TestState.RUNNING, TestState.PAUSED, TestState.WAITKEY,
+                                                    TestState.NONE]
         for index in range(self.tabs.count()):
             if index != 0:
                 self.tabs.setTabEnabled(index, enable)
