@@ -46,30 +46,16 @@ class ArduinoController:
                 self.arduino.digital_write(pin, 0)
             else:
                 self.arduino.digital_write(pin, 1 if state else 0)
+        sleep(1)
 
     def set_input_source(self, input_source: int, input_type: str) -> None:
-        """
-        Defines the active input source:
-         - Pino 4: CA1
-         - Pino 5: CA2
-         - Pino 6: CA3
-         - Pino 7: CC1
-         - Pino 8: CC2
-         - Pino 9: CC3
-         - Pino 10: Buzzer
-
-        :param input_source: Represents the input source to set.
-        :param input_type: Represents the input type variation.
-        :return: None.
-        """
-
         pin_mapping = {
-            (1, "CA"): 4,
-            (2, "CA"): 5,
-            (3, "CA"): 6,
-            (1, "CC"): 7,
-            (2, "CC"): 8,
-            (3, "CC"): 9,
+            (0, "CA"): 4,
+            (1, "CA"): 5,
+            (2, "CA"): 6,
+            (0, "CC"): 7,
+            (1, "CC"): 8,
+            (2, "CC"): 9,
         }
 
         if (input_source, input_type) in pin_mapping:

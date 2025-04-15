@@ -196,6 +196,7 @@ class TestController(QObject):
                     test_file.write(self.__read_temp_data_file())
                 self.__update_serial_number(True)
             self.__update_output_display()
+            self.arduino_controller.buzzer()
             self.reset_setup()
 
     def __update_display_limits(self, current_step: Step):
@@ -363,7 +364,7 @@ class TestController(QObject):
                     "load_lower": channel_params.ia,
                     "load": channel["limit"]
                 }
-                channels_pass.append(True if channel_params.ia <= channel["limit"] <= channel_params.ib else False)
+                channels_pass.append(True if channel_params.ia < channel["limit"] <= channel_params.ib else False)
 
             step_pass = False not in channels_pass
             self.test_sequence_status.append(step_pass)
@@ -415,7 +416,7 @@ class TestController(QObject):
         self.electronic_load_controller.toggle_active_channels_input(
             [key for key in self.test_data.channels.keys()], False)
         self.arduino_controller.setup_active_pin(True)
-        self.arduino_controller.active_input_source = 0
+        self.arduino_controller.active_pin = 0
         self.delay_manager.paused = False
         self.delay_manager.remaining_time = 0
         self.is_single_step_test = False

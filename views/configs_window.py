@@ -20,7 +20,7 @@ class ConfigWindow(QWidget):
         center_window(self)
 
         self.changes = {}
-        self.pins_setup = [(1, "CA"), (2, "CA"), (3, "CA"), (1, "CC"), (2, "CC"), (3, "CC")]
+        self.pins_setup = [(0, "CA"), (1, "CA"), (2, "CA"), (0, "CC"), (1, "CC"), (2, "CC")]
 
         # Components
         self.test_files_dir_field = QLineEdit(self.config.get(TEST_FILES_DIR))
