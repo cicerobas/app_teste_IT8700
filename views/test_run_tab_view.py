@@ -37,6 +37,10 @@ class TestRunTabView(QWidget):
         self.current_step_label.setObjectName("step_label")
         self.timer_label = QLabel("0.0s")
         self.steps_progress_label = QLabel(f"0/{len(self.test_data.steps)}")
+        self.group_label = QLabel(self.test_data.group)
+        self.model_label = QLabel(self.test_data.model)
+        self.customer_label = QLabel(self.test_data.customer)
+        self.input_type_label = QLabel(self.test_data.input_type)
 
         # Signals
         self.run_button.clicked.connect(self.test_controller.start_test_sequence)
@@ -126,26 +130,24 @@ class TestRunTabView(QWidget):
         # ACTIONS
         action_buttons = QWidget()
         action_buttons.setFixedHeight(70)
-        h_buttons_layout = QHBoxLayout()
+        h_buttons_layout = QHBoxLayout(action_buttons)
         h_buttons_layout.addWidget(self.run_button)
         h_buttons_layout.addWidget(self.stop_button)
-        action_buttons.setLayout(h_buttons_layout)
 
         # SETUP
         test_setup_groupbox = QGroupBox("SETUP")
         test_setup_groupbox.setProperty("class", "left_panel_gb")
         test_setup_groupbox.setFixedWidth(450)
-        f_test_setup_layout = QFormLayout()
+        f_test_setup_layout = QFormLayout(test_setup_groupbox)
         f_test_setup_layout.addRow("Serial Nº : ", self.serial_number_field)
         f_test_setup_layout.addRow("Tester : ", self.tester_id_field)
         f_test_setup_layout.addRow(action_buttons)
-        test_setup_groupbox.setLayout(f_test_setup_layout)
 
         # INFO
         test_info_groupbox = QGroupBox("INFO")
         test_info_groupbox.setMaximumWidth(450)
         test_info_groupbox.setProperty("class", "left_panel_gb")
-        v_test_info_layout = QVBoxLayout()
+        v_test_info_layout = QVBoxLayout(test_info_groupbox)
         v_test_info_layout.setSpacing(10)
         h_timer_progress_layout = QHBoxLayout()
         h_timer_progress_layout.addWidget(self.steps_progress_label)
@@ -155,13 +157,23 @@ class TestRunTabView(QWidget):
         f_test_info_layout.addRow("STEP:", self.current_step_label)
         v_test_info_layout.addLayout(f_test_info_layout)
         v_test_info_layout.addLayout(h_timer_progress_layout)
-        test_info_groupbox.setLayout(v_test_info_layout)
+
+        # DETAILS
+        test_details_groupbox = QGroupBox("DETAILS")
+        test_details_groupbox.setMaximumWidth(450)
+        test_details_groupbox.setProperty("class", "left_panel_gb")
+        f_test_details_layout = QFormLayout(test_details_groupbox)
+        f_test_details_layout.addRow("Group:", self.group_label)
+        f_test_details_layout.addRow("Model:", self.model_label)
+        f_test_details_layout.addRow("Customer:", self.customer_label)
+        f_test_details_layout.addRow("Input Type:", self.input_type_label)
 
         # LEFT PANEL
         v_left_panel_layout = QVBoxLayout()
         v_left_panel_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         v_left_panel_layout.addWidget(test_setup_groupbox)
         v_left_panel_layout.addWidget(test_info_groupbox)
+        v_left_panel_layout.addWidget(test_details_groupbox)
 
         # RIGHT PANEL
         g_right_panel_layout = QGridLayout()
