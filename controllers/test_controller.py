@@ -414,7 +414,7 @@ class TestController(QObject):
         self.electronic_load_controller.reset_instrument()
         self.electronic_load_controller.toggle_active_channels_input(
             [key for key in self.test_data.channels.keys()], False)
-        self.arduino_controller.set_active_pin(True)
+        self.arduino_controller.setup_active_pin(True)
         self.arduino_controller.active_input_source = 0
         self.delay_manager.paused = False
         self.delay_manager.remaining_time = 0

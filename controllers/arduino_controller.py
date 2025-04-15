@@ -1,4 +1,3 @@
-from contextlib import suppress
 from time import sleep
 
 import pyvisa
@@ -19,12 +18,12 @@ class ArduinoController:
         self.arduino = None
 
         arduino_path = self.config.get(ARDUINO_RESOURCE_PATH)
-        if arduino_path in self.rm.list_resources():
-            with suppress(Exception):
-                self.arduino = Arduino()
+        resources = self.rm.list_resources()
+        if arduino_path in resources:
+            self.arduino = Arduino()
 
-        self.output_states = {pin: False for pin in ARDUINO_OUTPUT_PINS}
-        self.active_input_source = 0
+        self.output_pins_state = {pin: False for pin in ARDUINO_OUTPUT_PINS}
+        self.active_pin = 0
 
     def check_connection(self) -> bool:
         """
@@ -33,7 +32,7 @@ class ArduinoController:
         """
         return self.arduino is not None
 
-    def set_active_pin(self, reset: bool) -> None:
+    def setup_active_pin(self, reset: bool) -> None:
         """
         Set active arduino output pins.
         :param reset: Flag to reset all pins to Off.
@@ -42,10 +41,11 @@ class ArduinoController:
         if not self.check_connection():
             return
 
-        for pin, state in self.output_states.items():
-            if state:
-                self.arduino.set_pin_mode(pin, "O")
-                self.arduino.digital_write(pin, 0 if reset else 1)
+        for pin, state in self.output_pins_state.items():
+            if reset:
+                self.arduino.digital_write(pin, 0)
+            else:
+                self.arduino.digital_write(pin, 1 if state else 0)
 
     def set_input_source(self, input_source: int, input_type: str) -> None:
         """
@@ -62,36 +62,34 @@ class ArduinoController:
         :param input_type: Represents the input type variation.
         :return: None.
         """
-        if self.active_input_source == input_source:
-            return
 
         pin_mapping = {
-            (1, "CA"): "4",
-            (2, "CA"): "5",
-            (3, "CA"): "6",
-            (1, "CC"): "7",
-            (2, "CC"): "8",
-            (3, "CC"): "9",
+            (1, "CA"): 4,
+            (2, "CA"): 5,
+            (3, "CA"): 6,
+            (1, "CC"): 7,
+            (2, "CC"): 8,
+            (3, "CC"): 9,
         }
 
         if (input_source, input_type) in pin_mapping:
             self.change_output(pin_mapping[(input_source, input_type)])
-            self.active_input_source = input_source
 
-    def change_output(self, active_pin: str) -> None:
+    def change_output(self, active_pin: int) -> None:
         """
         Resets all output pins, and activates the active_pin.
         :param active_pin: Represents the pin to be active.
         :return: None.
         """
-        if not self.check_connection():
+        if not self.check_connection() or self.active_pin == active_pin:
             return
 
-        self.set_active_pin(True)
-        self.output_states = {pin: (pin == active_pin) for pin in self.output_states}
-        self.set_active_pin(False)
+        self.active_pin = active_pin
+        self.setup_active_pin(True)
+        self.output_pins_state.update({pin: pin == active_pin for pin in self.output_pins_state})
+        self.setup_active_pin(False)
 
-    def buzzer(self) -> bool:
+    def buzzer(self):
         """
         Activates the buzzer alert.
         :return: Bool value indicating the alert done.
@@ -99,8 +97,6 @@ class ArduinoController:
         if not self.check_connection():
             return False
 
-        self.arduino.set_pin_mode("10", "O")
-        self.arduino.digital_write("10", 1)
+        self.arduino.digital_write(10, 1)
         sleep(0.5)
-        self.arduino.digital_write("10", 0)
-        return True
+        self.arduino.digital_write(10, 0)
