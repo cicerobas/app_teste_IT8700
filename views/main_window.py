@@ -1,4 +1,6 @@
 from datetime import datetime
+from enum import Enum
+from typing import Optional
 
 import yaml
 from PySide6.QtCore import Qt, QSize
@@ -15,6 +17,13 @@ from views.custom_dialogs_view import PasswordDialog
 from views.test_window import TestWindow
 
 
+class WindowOption(Enum):
+    START = 0
+    CREATE = 1
+    EDIT = 2
+    SETTINGS = 3
+
+
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
@@ -28,56 +37,61 @@ class MainWindow(QWidget):
         self.create_test_window = None
         self.test_window = None
 
-        # LOGO
+        # Components
+        ## Logo
         self.logo = QLabel()
         self.logo.setPixmap(QPixmap("assets/logo.png"))
         self.logo.setScaledContents(True)
         self.logo.setFixedSize(QSize(300, 200))
-
-        # BUTTONS
+        ## Buttons
         self.start_button = QPushButton("START")
         self.create_button = QPushButton("CREATE")
         self.edit_button = QPushButton("EDIT")
         self.settings_button = QPushButton("SETTINGS")
 
-        # BUTTONS LAYOUT
-        self.g_buttons_layout = QGridLayout()
-        self.g_buttons_layout.addWidget(self.start_button, 0, 0, 1, 2)
-        self.g_buttons_layout.addWidget(self.create_button, 1, 0, 1, 1)
-        self.g_buttons_layout.addWidget(self.edit_button, 1, 1, 1, 1)
-        self.g_buttons_layout.addWidget(self.settings_button, 2, 0, 1, 2)
+        # Signals
+        self.start_button.clicked.connect(lambda: self._show_window(WindowOption.START))
+        self.create_button.clicked.connect(lambda: self._show_window(WindowOption.CREATE))
+        self.edit_button.clicked.connect(lambda: self._show_window(WindowOption.EDIT))
+        self.settings_button.clicked.connect(lambda: self._show_window(WindowOption.SETTINGS))
 
-        # MAIN LAYOUT
-        self.v_main_layout = QVBoxLayout()
-        self.v_main_layout.setAlignment(
+        self.setLayout(self._setup_layout())
+
+    def _setup_layout(self) -> QVBoxLayout:
+        # Buttons
+        g_buttons_layout = QGridLayout()
+        g_buttons_layout.addWidget(self.create_button, 1, 0, 1, 1)
+        g_buttons_layout.addWidget(self.start_button, 0, 0, 1, 2)
+        g_buttons_layout.addWidget(self.edit_button, 1, 1, 1, 1)
+        g_buttons_layout.addWidget(self.settings_button, 2, 0, 1, 2)
+
+        # Main Layout
+        v_main_layout = QVBoxLayout()
+        v_main_layout.setAlignment(
             Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop
         )
-        self.v_main_layout.addWidget(self.logo)
-        self.v_main_layout.addSpacing(30)
-        self.v_main_layout.addLayout(self.g_buttons_layout)
+        v_main_layout.addWidget(self.logo)
+        v_main_layout.addSpacing(30)
+        v_main_layout.addLayout(g_buttons_layout)
+        return v_main_layout
 
-        self.setLayout(self.v_main_layout)
-        self.connect_signals()
-
-    def connect_signals(self):
-        self.start_button.clicked.connect(lambda: self.show_window(0))
-        self.create_button.clicked.connect(lambda: self.show_window(1))
-        self.edit_button.clicked.connect(lambda: self.show_window(2))
-        self.settings_button.clicked.connect(lambda: self.show_window(3))
-
-    def show_file_load_dialog(self) -> str | None:
+    def _show_file_load_dialog(self) -> Optional[str]:
+        """Shows a file picker to load a .yaml formatted test file."""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Open Test File...",
             self.config.get(TEST_FILES_DIR),
             "YAML Files (*.yaml)",
         )
-        return file_path or None
+        if file_path and file_path.endswith(".yaml"):
+            return file_path
+        return None
 
-    def show_window(self, window_id: int) -> None:
-        match window_id:
-            case 0:
-                file_path = self.show_file_load_dialog()
+    def _show_window(self, window_option: WindowOption) -> None:
+        """Configures and displays the selected window."""
+        match window_option:
+            case WindowOption.START:
+                file_path = self._show_file_load_dialog()
                 if file_path:
                     with open(file_path, "r", encoding="utf-8") as file:
                         data = yaml.safe_load(file)
@@ -85,24 +99,25 @@ class MainWindow(QWidget):
                     self.hide()
                     self.test_window = TestWindow(test_data, self)
                     self.test_window.showMaximized()
-            case 1:
-                if self.__request_password():
+            case WindowOption.CREATE:
+                if self._request_password():
                     self.hide()
                     self.create_test_window = CreateTestWindow(self)
                     self.create_test_window.showMaximized()
-            case 2:
-                if self.__request_password():
-                    file_path = self.show_file_load_dialog()
+            case WindowOption.EDIT:
+                if self._request_password():
+                    file_path = self._show_file_load_dialog()
                     if file_path:
                         self.hide()
                         self.create_test_window = CreateTestWindow(self, True, file_path)
                         self.create_test_window.showMaximized()
-            case 3:
-                if self.__request_password():
+            case WindowOption.SETTINGS:
+                if self._request_password():
                     self.hide()
                     self.config_window.show()
 
-    def __request_password(self) -> bool:
+    def _request_password(self) -> bool:
+        """Compares the typed password with the pattern."""
         key = datetime.now().strftime("%d%m")
         dialog = PasswordDialog(self)
         if dialog.exec():
