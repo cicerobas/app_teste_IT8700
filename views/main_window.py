@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import yaml
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QPixmap
@@ -9,6 +11,7 @@ from utils.constants import TEST_FILES_DIR
 from utils.window_utils import center_window
 from views.configs_window import ConfigWindow
 from views.create_test_window import CreateTestWindow
+from views.custom_dialogs_view import PasswordDialog
 from views.test_window import TestWindow
 
 
@@ -83,15 +86,26 @@ class MainWindow(QWidget):
                     self.test_window = TestWindow(test_data, self)
                     self.test_window.showMaximized()
             case 1:
-                self.hide()
-                self.create_test_window = CreateTestWindow(self)
-                self.create_test_window.showMaximized()
-            case 2:
-                file_path = self.show_file_load_dialog()
-                if file_path:
+                if self.__request_password():
                     self.hide()
-                    self.create_test_window = CreateTestWindow(self, True, file_path)
+                    self.create_test_window = CreateTestWindow(self)
                     self.create_test_window.showMaximized()
+            case 2:
+                if self.__request_password():
+                    file_path = self.show_file_load_dialog()
+                    if file_path:
+                        self.hide()
+                        self.create_test_window = CreateTestWindow(self, True, file_path)
+                        self.create_test_window.showMaximized()
             case 3:
-                self.hide()
-                self.config_window.show()
+                if self.__request_password():
+                    self.hide()
+                    self.config_window.show()
+
+    def __request_password(self) -> bool:
+        key = datetime.now().strftime("%d%m")
+        dialog = PasswordDialog(self)
+        if dialog.exec():
+            password = dialog.get_password()
+            return password == key
+        return False

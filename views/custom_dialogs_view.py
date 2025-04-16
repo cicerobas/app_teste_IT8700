@@ -1,6 +1,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDialog, QFormLayout, QComboBox, QLineEdit, QDialogButtonBox, QDoubleSpinBox, QGridLayout, \
-    QLabel, QWidget, QHBoxLayout, QCheckBox, QSpinBox
+    QLabel, QWidget, QHBoxLayout, QCheckBox, QSpinBox, QPushButton
 
 
 class ChannelSetupDialog(QDialog):
@@ -233,3 +233,21 @@ class StepPositionDialog(QDialog):
 
     def get_values(self):
         return self.position_spinbox.value()
+
+
+class PasswordDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Authentication required")
+
+        self.password_input = QLineEdit()
+        self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
+        self.ok_button = QPushButton("OK")
+        self.ok_button.clicked.connect(self.accept)
+
+        layout = QFormLayout(self)
+        layout.addRow("Password:", self.password_input)
+        layout.addWidget(self.ok_button)
+
+    def get_password(self) -> str:
+        return self.password_input.text()
