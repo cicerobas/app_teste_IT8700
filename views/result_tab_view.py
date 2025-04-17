@@ -9,6 +9,8 @@ class TestResultTabView(QWidget):
     def __init__(self, test_controller: TestController):
         super().__init__()
         self.test_controller = test_controller
+
+        # Components
         self.text_view = QPlainTextEdit()
         self.text_view.setReadOnly(True)
         font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
@@ -16,12 +18,12 @@ class TestResultTabView(QWidget):
         self.text_view.setFont(font)
 
         # Signals
-        self.test_controller.result_file_updated.connect(self.__update_text)
+        self.test_controller.result_file_updated.connect(self._update_text)
 
         # Layout
         layout = QVBoxLayout(self)
         layout.addWidget(self.text_view)
 
     @Slot(str)
-    def __update_text(self, text: str):
+    def _update_text(self, text: str) -> None:
         self.text_view.setPlainText(text)

@@ -5,7 +5,7 @@ from typing import Optional
 import yaml
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QGridLayout, QFileDialog
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QGridLayout, QFileDialog, QMessageBox
 
 from models.test_file_model import TestData
 from utils.config_manager import ConfigManager
@@ -122,5 +122,7 @@ class MainWindow(QWidget):
         dialog = PasswordDialog(self)
         if dialog.exec():
             password = dialog.get_password()
-            return password == key
+            if password == key:
+                return True
+            QMessageBox.warning(self, "Authentication Failed", "Wrong Password!")
         return False

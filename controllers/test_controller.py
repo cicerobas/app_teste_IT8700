@@ -63,28 +63,29 @@ class TestController(QObject):
         self.delay_manager = DelayManager()
 
         # Signals
-        self.worker_signals.update_output.connect(self.__update_output_display)
-        self.delay_manager.delay_completed.connect(self.__on_delay_completed)
+        self.worker_signals.update_output.connect(self._update_output_display)
+        self.delay_manager.delay_completed.connect(self._on_delay_completed)
 
         # Monitor
         if self.electronic_load_controller.conn_status:
-            self.__start_monitoring()
+            self._start_monitoring()
 
     @Slot()
-    def start_test_sequence(self):
+    def start_test_sequence(self) -> None:
+        """Verifies the conditions to start the test sequence."""
         if self.state in [TestState.RUNNING, TestState.PAUSED, TestState.WAITKEY]:
             return
 
-        if not self.__check_instruments():
+        if not self._check_instruments():
             return
 
         if self.serial_number == "":
-            self.__update_serial_number(self.serial_number_needs_increment)
+            self._update_serial_number(self.serial_number_needs_increment)
 
         if self.state is TestState.PASSED:
-            self.__update_serial_number(self.serial_number_needs_increment)
+            self._update_serial_number(self.serial_number_needs_increment)
 
-        self.__update_state(TestState.RUNNING)
+        self._update_state(TestState.RUNNING)
         self.current_step_index = 0
         self.test_result_data.update(
             group=self.test_data.group,
@@ -98,15 +99,11 @@ class TestController(QObject):
         self.electronic_load_controller.toggle_active_channels_input(
             [key for key in self.test_data.channels.keys()], True)
 
-        self.__run_steps()
+        self._run_steps()
 
     @Slot(int)
-    def setup_single_run(self, step_id):
-        """
-        Setups a single step test and starts the test sequence.
-        :param step_id: ID of the Step.
-        :return: None.
-        """
+    def setup_single_run(self, step_id: int) -> None:
+        """Setups a single step test and starts the test sequence."""
         for index, step in enumerate(self.test_data.steps):
             if step.id == step_id:
                 self.single_step_index = index
@@ -115,50 +112,45 @@ class TestController(QObject):
                 self.start_test_sequence()
 
     @Slot()
-    def toggle_test_pause_state(self):
-        """
-        Toggle the current state between RUNNING and PAUSED.
-        :return:
-        """
+    def toggle_test_pause_state(self) -> None:
+        """Toggle the current state between RUNNING and PAUSED."""
         if self.state not in [TestState.RUNNING, TestState.PAUSED]:
             return
         self.delay_manager.pause_resume()
-        self.__update_state(TestState.RUNNING if self.state is TestState.PAUSED else TestState.PAUSED)
+        self._update_state(TestState.RUNNING if self.state is TestState.PAUSED else TestState.PAUSED)
 
     @Slot()
-    def continue_sequence(self):
-        self.__update_state(TestState.RUNNING)
-        self.__on_delay_completed()
+    def continue_sequence(self) -> None:
+        self._update_state(TestState.RUNNING)
+        self._on_delay_completed()
 
     @Slot()
-    def cancel_test_sequence(self):
-        """
-        Cancels the current test sequence.
-        :return: None.
-        """
+    def cancel_test_sequence(self) -> None:
         if self.state not in [TestState.RUNNING, TestState.PAUSED, TestState.WAITKEY, TestState.NONE]:
             return
-        self.__update_state(TestState.CANCELED)
+        self._update_state(TestState.CANCELED)
         self.reset_setup()
 
     @Slot()
-    def __on_delay_completed(self):
+    def _on_delay_completed(self) -> None:
+        """Called by the delay manager, runs the next test step."""
         if self.state is not TestState.CANCELED:
-            self.__validate_direct_current_step_values()
+            self._validate_direct_current_step_values()
             self.current_step_index += 1
-            self.__run_steps()
+            self._run_steps()
 
     @Slot()
-    def __update_output_display(self):
-        """
-        Updates the channel displays (voltage) in a dedicated thread.
-        :return: None.
-        """
+    def _update_output_display(self) -> None:
+        """Updates each [channel_view] voltage in a dedicated thread."""
         for channel in self.channel_list:
             voltage_value = self.electronic_load_controller.get_channel_value(channel.channel_id)
             channel.set_values((float(voltage_value), None))
 
-    def __run_steps(self):
+    def _run_steps(self) -> None:
+        """
+        Verifies the step list and runs the tests.
+        At the end of the sequence, verifies the test condition [PASS or FAIL] and handles the test file.
+        """
         sleep(1)
         if self.is_single_step_test:
             steps = [self.test_data.steps[self.single_step_index]]
@@ -169,14 +161,14 @@ class TestController(QObject):
             current_step: Step = steps[self.current_step_index]
             self.arduino_controller.set_input_source(current_step.input_source, self.test_data.input_type)
             self.current_step_changed.emit(current_step.description, current_step.duration, self.current_step_index)
-            self.__update_display_limits(current_step)
+            self._update_display_limits(current_step)
             match current_step.step_type:
                 case 1:
-                    self.__handle_direct_current_step(current_step)
+                    self._run_direct_current_step(current_step)
                 case 2:
-                    self.__handle_current_limiting_step(current_step)
+                    self._set_current_limiting_step(current_step)
                 case 3:
-                    self.__handle_short_test_step(current_step)
+                    self._set_short_test_step(current_step)
 
         else:
             self.electronic_load_controller.toggle_active_channels_input(
@@ -186,23 +178,24 @@ class TestController(QObject):
                 os.remove(self.temp_data_file.name)
 
             if self.state is not TestState.CANCELED:
-                self.__update_state(TestState.FAILED if False in self.test_sequence_status else TestState.PASSED)
+                self._update_state(TestState.FAILED if False in self.test_sequence_status else TestState.PASSED)
 
             self.temp_data_file = generate_report_file(self.test_result_data)
-            self.result_file_updated.emit(self.__read_temp_data_file())
+            self.result_file_updated.emit(self._read_temp_data_file())
             if self.state is TestState.PASSED and not self.is_single_step_test:
                 with open(file=f"{self.config.get(TEST_FILES_DIR)}/{self.test_data.group}/{self.serial_number}.txt",
                           mode="w", encoding="utf-8") as test_file:
-                    test_file.write(self.__read_temp_data_file())
-                self.__update_serial_number(True)
-            self.__update_output_display()
+                    test_file.write(self._read_temp_data_file())
+                self._update_serial_number(True)
+            self._update_output_display()
             self.arduino_controller.buzzer()
             self.reset_setup()
 
-    def __update_display_limits(self, current_step: Step):
+    def _update_display_limits(self, current_step: Step) -> None:
+        """Updates the limits on each [channel_view] slider."""
         for channel_id, param_id in current_step.channel_params.items():
-            channel_view = self.__get_channel_view_by_id(channel_id)
-            channel_params = self.__get_channel_params_by_id(param_id)
+            channel_view = self._get_channel_view_by_id(channel_id)
+            channel_params = self._get_channel_params_by_id(param_id)
             if current_step.step_type == 1:
                 channel_view.set_limits(channel_params.va, channel_params.vb)
             else:
@@ -210,31 +203,32 @@ class TestController(QObject):
                 upper_value = channel_params.va + lower_value
                 channel_view.set_limits(round(lower_value, 2), round(upper_value, 2))
 
-    def __read_temp_data_file(self) -> str:
+    def _read_temp_data_file(self) -> str:
         if self.temp_data_file:
             with open(self.temp_data_file.name, "r", encoding="utf-8") as file:
                 return file.read()
         return ""
 
-    def __handle_short_test_step(self, current_step: Step):
-        self.__update_state(TestState.NONE)
+    def _set_short_test_step(self, current_step: Step) -> None:
+        self._update_state(TestState.NONE)
         channels_data = []
         for channel_id, param_id in current_step.channel_params.items():
             channels_data.append({'id': channel_id, 'param_id': param_id, 'shutdown': False, 'recovery': False})
-        self.__verify_short_test(channels_data)
+        self._run_short_test(channels_data)
 
-    def __verify_short_test(self, data: list[dict], current_index: int = 0, current_cycle: int = 0):
+    def _run_short_test(self, data: list[dict], current_index: int = 0, current_cycle: int = 0) -> None:
+        """Sets the channel for [SHORT] mode and recursively verifies both states [shutdown, recovery]."""
         if self.state is TestState.CANCELED:
             return
         delay = 500
         if current_index < len(data):
             current_channel = data[current_index]
-            channel_params = self.__get_channel_params_by_id(current_channel["param_id"])
+            channel_params = self._get_channel_params_by_id(current_channel["param_id"])
             if current_cycle == 0:
                 self.electronic_load_controller.set_channel_current(current_channel["id"], channel_params.ia)
 
-            current_channel_view = self.__get_channel_view_by_id(current_channel["id"])
-            channel_values = current_channel_view.get_values()
+            current_channel_view = self._get_channel_view_by_id(current_channel["id"])
+            channel_values = current_channel_view.get_display_values()
             voltage_read = channel_values["voltage"]
             if current_cycle < 20 and not current_channel["recovery"]:
                 if voltage_read >= channel_params.va * 0.2 and not current_channel["shutdown"]:
@@ -246,16 +240,17 @@ class TestController(QObject):
                     "recovery"]:
                     current_channel["recovery"] = True
 
-                QTimer.singleShot(delay, lambda: self.__verify_short_test(data, current_index, current_cycle + 1))
+                QTimer.singleShot(delay, lambda: self._run_short_test(data, current_index, current_cycle + 1))
             else:
                 self.electronic_load_controller.set_channel_current(current_channel["id"], 0)
-                QTimer.singleShot(delay, lambda: self.__verify_short_test(data, current_index + 1, 0))
+                QTimer.singleShot(delay, lambda: self._run_short_test(data, current_index + 1, 0))
         else:
-            self.__validate_short_test_step(data)
+            self._validate_short_test_step(data)
             self.current_step_index += 1
-            self.__run_steps()
+            self._run_steps()
 
-    def __validate_short_test_step(self, data: list[dict]):
+    def _validate_short_test_step(self, data: list[dict]) -> None:
+        """Validates the [SHORT] mode test, verifying the [recovery] and [shutdown] states."""
         step_pass = False
         channels_pass = []
         current_step_data = []
@@ -263,7 +258,7 @@ class TestController(QObject):
             self.single_step_index if self.is_single_step_test else self.current_step_index]
         for channel in data:
             channel_data = {}
-            channel_params = self.__get_channel_params_by_id(channel["param_id"])
+            channel_params = self._get_channel_params_by_id(channel["param_id"])
             if channel_params:
                 channel_data = {
                     "channel_id": str(channel["id"]),
@@ -278,28 +273,30 @@ class TestController(QObject):
             current_step_data.append(channel_data)
             self.test_sequence_status.append(step_pass)
 
-        self.__handle_test_results_data(current_step, tuple(current_step_data), step_pass)
+        self._handle_test_results_data(current_step, tuple(current_step_data), step_pass)
 
-    def __handle_direct_current_step(self, current_step: Step):
+    def _run_direct_current_step(self, current_step: Step) -> None:
+        """Sets the channel current and handles the step delay."""
         for channel_id, param_id in current_step.channel_params.items():
-            channel_params = self.__get_channel_params_by_id(param_id)
+            channel_params = self._get_channel_params_by_id(param_id)
             if channel_params:
                 self.electronic_load_controller.set_channel_current(channel_id, channel_params.ia)
-                channel_view = self.__get_channel_view_by_id(channel_id)
+                channel_view = self._get_channel_view_by_id(channel_id)
                 channel_view.set_values((None, channel_params.ia))
 
         if current_step.duration == 0:
-            self.__update_state(TestState.WAITKEY)
+            self._update_state(TestState.WAITKEY)
         else:
             self.delay_manager.start_delay(current_step.duration * 1000)
 
-    def __handle_current_limiting_step(self, current_step: Step):
-        self.__update_state(TestState.NONE)
-        self.__handle_channels_current(current_step.channel_params, None, None)
+    def _set_current_limiting_step(self, current_step: Step) -> None:
+        self._update_state(TestState.NONE)
+        self._run_current_limiting_step(current_step.channel_params, None, None)
 
-    def __handle_channels_current(self, channel_params: dict[int, int], data: list[dict] | None,
-                                  current_load: float | None,
-                                  current_index: int = 0):
+    def _run_current_limiting_step(self, channel_params: dict[int, int], data: list[dict] | None,
+                                   current_load: float | None,
+                                   current_index: int = 0) -> None:
+        """Sets the channel for testing and recursively increases the current until the limit is reached."""
 
         if self.state is TestState.CANCELED:
             return
@@ -313,41 +310,42 @@ class TestController(QObject):
         if current_index < len(channels_data):
 
             current_channel = channels_data[current_index]
-            current_channel_view = self.__get_channel_view_by_id(current_channel["id"])
-            params = self.__get_channel_params_by_id(current_channel["param_id"])
+            current_channel_view = self._get_channel_view_by_id(current_channel["id"])
+            params = self._get_channel_params_by_id(current_channel["param_id"])
             if not current_load:
                 current_load = params.ia
 
-            channel_values = current_channel_view.get_values()
+            channel_values = current_channel_view.get_display_values()
             voltage_read = channel_values["voltage"]
             if not current_channel["done"]:
                 if voltage_read >= params.va and current_load <= params.ib:
                     current_load += 0.01
                     self.electronic_load_controller.set_channel_current(current_channel["id"], current_load)
                     current_channel_view.set_values((None, current_load))
-                    QTimer.singleShot(100, lambda: self.__handle_channels_current(channel_params, channels_data,
-                                                                                  current_load, current_index))
+                    QTimer.singleShot(100, lambda: self._run_current_limiting_step(channel_params, channels_data,
+                                                                                   current_load, current_index))
                 else:
                     current_channel["limit"] = current_load
                     self.electronic_load_controller.set_channel_current(current_channel["id"], params.ia)
                     current_channel_view.set_values((None, params.ia))
                     current_channel["done"] = True
-                    QTimer.singleShot(100, lambda: self.__handle_channels_current(channel_params, channels_data,
-                                                                                  params.ia, current_index))
+                    QTimer.singleShot(100, lambda: self._run_current_limiting_step(channel_params, channels_data,
+                                                                                   params.ia, current_index))
             else:
                 if voltage_read <= params.va:
-                    QTimer.singleShot(100, lambda: self.__handle_channels_current(channel_params, channels_data,
-                                                                                  params.ia, current_index))
+                    QTimer.singleShot(100, lambda: self._run_current_limiting_step(channel_params, channels_data,
+                                                                                   params.ia, current_index))
                 else:
-                    QTimer.singleShot(100, lambda: self.__handle_channels_current(channel_params, channels_data,
-                                                                                  params.ia, current_index + 1))
+                    QTimer.singleShot(100, lambda: self._run_current_limiting_step(channel_params, channels_data,
+                                                                                   params.ia, current_index + 1))
         else:
-            self.__update_state(TestState.RUNNING)
-            self.__validate_current_limiting_step_values(channels_data)
+            self._update_state(TestState.RUNNING)
+            self._validate_current_limiting_step_values(channels_data)
             self.current_step_index += 1
-            self.__run_steps()
+            self._run_steps()
 
-    def __validate_current_limiting_step_values(self, data: list[dict]):
+    def _validate_current_limiting_step_values(self, data: list[dict]) -> None:
+        """Validates and creates a dict with the current limiting test values."""
         step_pass = False
         channels_pass = []
         current_step_data = []
@@ -355,7 +353,7 @@ class TestController(QObject):
             self.single_step_index if self.is_single_step_test else self.current_step_index]
         for channel in data:
             channel_data = {}
-            channel_params = self.__get_channel_params_by_id(channel["param_id"])
+            channel_params = self._get_channel_params_by_id(channel["param_id"])
             if channel_params:
                 channel_data = {
                     "channel_id": str(channel["id"]),
@@ -370,19 +368,20 @@ class TestController(QObject):
             self.test_sequence_status.append(step_pass)
             current_step_data.append(channel_data)
 
-        self.__handle_test_results_data(current_step, tuple(current_step_data), step_pass)
+        self._handle_test_results_data(current_step, tuple(current_step_data), step_pass)
 
-    def __validate_direct_current_step_values(self):
+    def _validate_direct_current_step_values(self) -> None:
+        """Validates and creates a dict with the direct current test values."""
         step_pass = False
         channels_pass = []
         current_step_data = []
         current_step = self.test_data.steps[
             self.single_step_index if self.is_single_step_test else self.current_step_index]
         for channel_id, param_id in current_step.channel_params.items():
-            channel_view = self.__get_channel_view_by_id(channel_id)
-            values = channel_view.get_values()
+            channel_view = self._get_channel_view_by_id(channel_id)
+            values = channel_view.get_display_values()
             channel_data = {}
-            channel_params = self.__get_channel_params_by_id(param_id)
+            channel_params = self._get_channel_params_by_id(param_id)
             if channel_params:
                 channel_data = {
                     "channel_id": str(channel_view.channel_id),
@@ -400,9 +399,9 @@ class TestController(QObject):
             self.test_sequence_status.append(step_pass)
             current_step_data.append(channel_data)
 
-        self.__handle_test_results_data(current_step, tuple(current_step_data), step_pass)
+        self._handle_test_results_data(current_step, tuple(current_step_data), step_pass)
 
-    def __handle_test_results_data(self, current_step: Step, data: tuple, step_status: bool):
+    def _handle_test_results_data(self, current_step: Step, data: tuple, step_status: bool) -> None:
         step_data = {
             "description": current_step.description,
             "step_status": step_status,
@@ -411,7 +410,7 @@ class TestController(QObject):
         }
         self.test_result_data["steps_result"].append(step_data)
 
-    def reset_setup(self):
+    def reset_setup(self) -> None:
         self.electronic_load_controller.reset_instrument()
         self.electronic_load_controller.toggle_active_channels_input(
             [key for key in self.test_data.channels.keys()], False)
@@ -423,42 +422,28 @@ class TestController(QObject):
         self.single_step_index = -1
         self.test_sequence_status.clear()
 
-    def __update_state(self, new_state: TestState):
-        """
-        Updates the current test state.
-        :param new_state: TestState to be set.
-        :return: None.
-        """
+    def _update_state(self, new_state: TestState) -> None:
+        """Updates the current test state."""
         if self.state != new_state:
             self.state = new_state
             self.state_changed.emit(new_state.value)
 
-    def __update_serial_number(self, is_increment: bool):
-        """
-        Set the serial number to zeros or increments the current number by 1.
-        :param is_increment: Case true, increments the number.
-        :return: None.
-        """
+    def _update_serial_number(self, is_increment: bool) -> None:
+        """Set the [serial_number] to zeros or increments the current number by 1."""
         new_value = str(int(self.serial_number) + 1) if is_increment else self.serial_number
         self.serial_number = new_value.zfill(8)
         self.serial_number_updated.emit(self.serial_number)
 
-    def __start_monitoring(self):
-        """
-        Creates a new thread worker case it's None, else resume it.
-        :return: None.
-        """
+    def _start_monitoring(self) -> None:
+        """Creates a new thread worker case it's None, else resume it."""
         if self.monitoring_worker is None:
             self.monitoring_worker = MonitorWorker(self.worker_signals)
             self.thread_pool.start(self.monitoring_worker)
         else:
             self.monitoring_worker.resume()
 
-    def __check_instruments(self) -> bool:
-        """
-        Checks for the instruments connection.
-        :return: Bool representing the instruments state.
-        """
+    def _check_instruments(self) -> bool:
+        """Checks for the instruments connection."""
         if not self.electronic_load_controller.conn_status:
             show_custom_dialog("IT8700 : INSTRUMENT NOT FOUND.", QMessageBox.Icon.Critical)
             return False
@@ -467,8 +452,8 @@ class TestController(QObject):
             return False
         return True
 
-    def __get_channel_params_by_id(self, param_id: int) -> Param | None:
+    def _get_channel_params_by_id(self, param_id: int) -> Param | None:
         return next((param for param in self.test_data.params if param.id == param_id), None)
 
-    def __get_channel_view_by_id(self, channel_id: int) -> ChannelMonitorView | None:
+    def _get_channel_view_by_id(self, channel_id: int) -> ChannelMonitorView | None:
         return next((channel_view for channel_view in self.channel_list if channel_view.channel_id == channel_id), None)

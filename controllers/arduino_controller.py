@@ -8,10 +8,6 @@ from utils.constants import ARDUINO_RESOURCE_PATH, ARDUINO_OUTPUT_PINS
 
 
 class ArduinoController:
-    """
-    Used to control the connection with Arduino and run commands using pyduino interface.
-    """
-
     def __init__(self):
         self.config = ConfigManager()
         self.rm = pyvisa.ResourceManager("@py")
@@ -26,18 +22,11 @@ class ArduinoController:
         self.active_pin = 0
 
     def check_connection(self) -> bool:
-        """
-        Checks the connection status with the Arduino.
-        :return: Connection status (bool).
-        """
+        """Checks the connection status with the Arduino."""
         return self.arduino is not None
 
     def setup_active_pin(self, reset: bool) -> None:
-        """
-        Set active arduino output pins.
-        :param reset: Flag to reset all pins to Off.
-        :return: None.
-        """
+        """Activates the selected arduino pin or [reset]."""
         if not self.check_connection():
             return
 
@@ -49,6 +38,7 @@ class ArduinoController:
         sleep(1)
 
     def set_input_source(self, input_source: int, input_type: str) -> None:
+        """Sets the active output pin relative to [pin_mapping]."""
         pin_mapping = {
             (0, "CA"): 4,
             (1, "CA"): 5,
@@ -62,11 +52,7 @@ class ArduinoController:
             self.change_output(pin_mapping[(input_source, input_type)])
 
     def change_output(self, active_pin: int) -> None:
-        """
-        Resets all output pins, and activates the active_pin.
-        :param active_pin: Represents the pin to be active.
-        :return: None.
-        """
+        """Updates all output pins state."""
         if not self.check_connection() or self.active_pin == active_pin:
             return
 
@@ -75,13 +61,10 @@ class ArduinoController:
         self.output_pins_state.update({pin: pin == active_pin for pin in self.output_pins_state})
         self.setup_active_pin(False)
 
-    def buzzer(self):
-        """
-        Activates the buzzer alert.
-        :return: Bool value indicating the alert done.
-        """
+    def buzzer(self) -> None:
+        """Activates the buzzer alert."""
         if not self.check_connection():
-            return False
+            return
 
         self.arduino.digital_write(10, 1)
         sleep(0.5)

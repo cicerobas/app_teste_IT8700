@@ -5,6 +5,8 @@ SAT_BAUD_RATE: str = 'sat_baud_rate'
 ARDUINO_RESOURCE_PATH: str = 'arduino_resource_path'
 ARDUINO_SERIAL_PORT: str = 'arduino_serial_port'
 ARDUINO_BAUD_RATE: str = 'arduino_baud_rate'
+
+# CONSTANTS
 ARDUINO_READ_TIMEOUT: int = 5
 ARDUINO_OUTPUT_PINS: dict[int, str] = {
     4: "CA1",
@@ -15,4 +17,9 @@ ARDUINO_OUTPUT_PINS: dict[int, str] = {
     9: "CC3",
     10: "Buzzer",
 }
-AVAILABLE_CHANNELS = [1, 3, 4]
+STEP_TYPES_MAP: dict[int, str] = {
+    1: "Direct Current",
+    2: "Current Limiting",
+    3: "Automatic Short",
+}
+AVAILABLE_CHANNELS: list[int] = [1, 3, 4]

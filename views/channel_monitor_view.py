@@ -10,7 +10,7 @@ class CustomFloatSlider(QSlider):
         self._step = 0.1
         self._decimals = decimals
 
-    def set_range(self, min_val: float, max_val: float, step: float):
+    def set_range(self, min_val: float, max_val: float, step: float) -> None:
         self._min = min_val
         self._max = max_val
         self._step = step
@@ -18,7 +18,7 @@ class CustomFloatSlider(QSlider):
         steps_count = int(round((max_val - min_val) / step))
         self.setRange(0, steps_count)
 
-    def set_value(self, float_val: float):
+    def set_value(self, float_val: float) -> None:
         slider_val = int(round((float_val - self._min) / self._step))
         self.setValue(slider_val)
 
@@ -32,9 +32,9 @@ class ChannelMonitorView(QGroupBox):
         self.setProperty("class", "channel_monitor")
 
         # Values
-        self.__voltage: float = 0
-        self.__current: float = 0
-        self.__power: float = 0
+        self._voltage: float = 0
+        self._current: float = 0
+        self._power: float = 0
 
         # Components
         self.voltage_label = QLabel("0 V")
@@ -48,30 +48,26 @@ class ChannelMonitorView(QGroupBox):
         self.voltage_slider = CustomFloatSlider()
         self.voltage_slider.setEnabled(False)
 
-        self.setLayout(self.__setup_layout())
+        self.setLayout(self._setup_layout())
 
     def set_values(self, values: tuple[float | None, float | None]) -> None:
-        """
-        Updates channel monitor values. If a value is None, the previous value is maintained.
-        :param values: tuple (voltage, current)
-        :return: None
-        """
+        """Updates channel monitor values. If a value is None, the previous value is maintained."""
         voltage, current = values
 
-        self.__voltage = voltage if voltage is not None else self.__voltage
-        self.__current = current if current is not None else self.__current
-        self.__power = self.__voltage * self.__current
-        self.__update_displays()
+        self._voltage = voltage if voltage is not None else self._voltage
+        self._current = current if current is not None else self._current
+        self._power = self._voltage * self._current
+        self._update_displays()
 
-    def set_limits(self, lower: float, upper: float):
-        self.voltage_lower_label.setText(f"{lower}")
-        self.voltage_upper_label.setText(f"{upper}")
-        self.voltage_slider.set_range(lower, upper, 0.001)
+    def set_limits(self, lower_limit: float, upper_limit: float) -> None:
+        self.voltage_lower_label.setText(f"{lower_limit}")
+        self.voltage_upper_label.setText(f"{upper_limit}")
+        self.voltage_slider.set_range(lower_limit, upper_limit, 0.001)
 
-    def get_values(self) -> dict[str, float]:
-        return {"voltage": self.__voltage, "current": self.__current, "power": self.__power}
+    def get_display_values(self) -> dict[str, float]:
+        return {"voltage": self._voltage, "current": self._current, "power": self._power}
 
-    def __setup_layout(self) -> QVBoxLayout:
+    def _setup_layout(self) -> QVBoxLayout:
         g_layout = QGridLayout()
         g_layout.setSpacing(0)
         g_layout.addWidget(self.voltage_label, 0, 0, 2, 1)
@@ -87,10 +83,11 @@ class ChannelMonitorView(QGroupBox):
         h_slider_layout.addWidget(self.voltage_upper_label)
         v_main_layout.addLayout(g_layout)
         v_main_layout.addWidget(slider_widget)
+
         return v_main_layout
 
-    def __update_displays(self):
-        self.voltage_slider.set_value(self.__voltage)
-        self.voltage_label.setText(f"{'%.2f' % self.__voltage if self.__voltage >= 10 else '%.3f' % self.__voltage} V")
-        self.current_label.setText(f"{'%.2f' % self.__current if self.__current >= 10 else '%.2f' % self.__current} A")
-        self.power_label.setText(f"{'%.2f' % self.__power} W")
+    def _update_displays(self) -> None:
+        self.voltage_slider.set_value(self._voltage)
+        self.voltage_label.setText(f"{'%.2f' % self._voltage if self._voltage >= 10 else '%.3f' % self._voltage} V")
+        self.current_label.setText(f"{'%.2f' % self._current if self._current >= 10 else '%.2f' % self._current} A")
+        self.power_label.setText(f"{'%.2f' % self._power} W")

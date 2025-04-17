@@ -4,16 +4,16 @@ from PySide6.QtWidgets import QDialog, QFormLayout, QComboBox, QLineEdit, QDialo
 
 
 class ChannelSetupDialog(QDialog):
-    def __init__(self, available_channels: list[int], data: tuple[int, str] | None, parent=None):
+    def __init__(self, available_channels: list[int], channel_to_edit: tuple[int, str] | None, parent=None):
         super().__init__(parent)
         self.available_channels: list[str] = [str(channel) for channel in available_channels]
-        self.data = data
+        self.channel_to_edit = channel_to_edit
         self.setWindowTitle("Channels")
 
         # Components
         self.channels_combobox = QComboBox()
         self.channels_combobox.addItems(self.available_channels)
-        self.channel_label = QLineEdit(self.data[1] if self.data else "")
+        self.channel_label = QLineEdit(self.channel_to_edit[1] if self.channel_to_edit else "")
 
         # Buttons
         self.button_box = QDialogButtonBox(
@@ -25,14 +25,14 @@ class ChannelSetupDialog(QDialog):
 
         # Layout
         layout = QFormLayout(self)
-        if not self.data:
+        if not self.channel_to_edit:
             layout.addRow("Channel:", self.channels_combobox)
         layout.addRow("Label:", self.channel_label)
         layout.addWidget(self.button_box)
 
     def get_values(self) -> dict[int, str]:
-        if self.data:
-            return {self.data[0]: self.channel_label.text()}
+        if self.channel_to_edit:
+            return {self.channel_to_edit[0]: self.channel_label.text()}
 
         return {int(self.channels_combobox.currentText()): self.channel_label.text()}
 
@@ -46,9 +46,9 @@ def custom_double_spinbox(suffix: str) -> QDoubleSpinBox:
 
 
 class ParamsSetupDialog(QDialog):
-    def __init__(self, param_dict: dict | None, parent=None):
+    def __init__(self, param_to_edit: dict | None, parent=None):
         super().__init__(parent)
-        self.param = param_dict
+        self.param_to_edit = param_to_edit
         self.setWindowTitle("Parameters")
 
         # Components
@@ -66,6 +66,7 @@ class ParamsSetupDialog(QDialog):
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
 
+        # Layout
         layout = QGridLayout(self)
         layout.addWidget(QLabel("TAG:"), 0, 0, 1, 1)
         layout.addWidget(QLabel("VA:"), 1, 0, 1, 1, Qt.AlignmentFlag.AlignRight)
@@ -79,17 +80,18 @@ class ParamsSetupDialog(QDialog):
         layout.addWidget(self.ib_field, 2, 3, 1, 1)
         layout.addWidget(self.button_box, 3, 0, 1, 4, Qt.AlignmentFlag.AlignRight)
 
-        if self.param:
-            self.__set_field_values()
+        if self.param_to_edit:
+            self._set_field_values()
 
-    def __set_field_values(self):
-        self.tag_label.setText(self.param['tag'])
-        self.va_field.setValue(self.param['va'])
-        self.vb_field.setValue(self.param['vb'])
-        self.ia_field.setValue(self.param['ia'])
-        self.ib_field.setValue(self.param['ib'])
+    def _set_field_values(self) -> None:
+        """Sets the parameter fields value on editing."""
+        self.tag_label.setText(self.param_to_edit['tag'])
+        self.va_field.setValue(self.param_to_edit['va'])
+        self.vb_field.setValue(self.param_to_edit['vb'])
+        self.ia_field.setValue(self.param_to_edit['ia'])
+        self.ib_field.setValue(self.param_to_edit['ib'])
 
-    def get_values(self):
+    def get_values(self) -> dict:
         return {'tag': self.tag_label.text(), 'va': self.va_field.value(), 'vb': self.vb_field.value(),
                 'ia': self.ia_field.value(), 'ib': self.ib_field.value()}
 
@@ -108,13 +110,15 @@ class CustomChannelParamWidget(QWidget):
         self.params_combobox = QComboBox()
         self.params_combobox.addItems([param['tag'] for param in self.params])
 
+        # Layout
         layout = QHBoxLayout(self)
         layout.addWidget(self.enabled_checkbox)
         layout.addWidget(self.channel_label)
         layout.addStretch(1)
         layout.addWidget(self.params_combobox, alignment=Qt.AlignmentFlag.AlignRight)
 
-    def set_values(self, checked: bool, param_id: int | None):
+    def set_values(self, checked: bool, param_id: int | None) -> None:
+        """Sets the parameter id values in the enabled channels on editing."""
         if checked:
             self.enabled_checkbox.setChecked(True)
             index = self.params.index(next((param for param in self.params if param['id'] == param_id)))
@@ -129,12 +133,12 @@ class CustomChannelParamWidget(QWidget):
 
 class StepSetupDialog(QDialog):
     def __init__(self, input_sources: list[str], input_type: str, channels: dict[int, str], params: list[dict],
-                 step: dict | None,
+                 step_to_edit: dict | None,
                  parent=None):
         super().__init__(parent)
         self.channels = channels
         self.params = params
-        self.step = step
+        self.step_to_edit = step_to_edit
 
         self.setWindowTitle("Steps")
 
@@ -143,7 +147,7 @@ class StepSetupDialog(QDialog):
                                self.channels.items()]
         self.step_type_combobox = QComboBox()
         self.step_type_combobox.addItems(["1 - Direct Current", "2 - Current Limiting", "3 - Automatic Short"])
-        self.step_type_combobox.currentIndexChanged.connect(self.__check_disable_duration_field)
+        self.step_type_combobox.currentIndexChanged.connect(self._check_disable_duration_field)
         self.description_field = QLineEdit()
         self.duration_field = custom_double_spinbox("s")
         self.input_source_combox = QComboBox()
@@ -170,29 +174,33 @@ class StepSetupDialog(QDialog):
 
         layout.addWidget(self.button_box)
 
-        if self.step:
-            self.__set_step_values()
+        if self.step_to_edit:
+            self._set_step_values()
 
-    def __check_disable_duration_field(self):
+    def _check_disable_duration_field(self):
+        """Disables the [duration] field on non-time-based steps."""
         if self.step_type_combobox.currentIndex() != 0:
             self.duration_field.setValue(0)
             self.duration_field.setEnabled(False)
         else:
             self.duration_field.setEnabled(True)
 
-    def __set_step_values(self):
-        self.step_type_combobox.setCurrentIndex(self.step.get("step_type") - 1)
-        self.description_field.setText(self.step.get("description"))
-        self.duration_field.setValue(self.step.get("duration"))
-        self.input_source_combox.setCurrentIndex(self.step.get("input_source"))
-        channel_params_dict = self.step.get("channel_params")
+    def _set_step_values(self):
+        """Sets the fields value on step editing."""
+        self.step_type_combobox.setCurrentIndex(self.step_to_edit.get("step_type") - 1)
+        self.description_field.setText(self.step_to_edit.get("description"))
+        self.duration_field.setValue(self.step_to_edit.get("duration"))
+        self.input_source_combox.setCurrentIndex(self.step_to_edit.get("input_source"))
+        channel_params_dict = self.step_to_edit.get("channel_params")
+
         for channel_widget in self.channel_params:
             if channel_widget.channel_id in channel_params_dict.keys():
                 channel_widget.set_values(True, channel_params_dict.get(channel_widget.channel_id))
             else:
                 channel_widget.set_values(False, None)
 
-    def get_values(self):
+    def get_values(self) -> dict:
+        """Returns a dictionary with the step data."""
         step_values = {
             "step_type": self.step_type_combobox.currentIndex() + 1,
             "description": self.description_field.text(),
@@ -231,7 +239,7 @@ class StepPositionDialog(QDialog):
         layout.addRow("New Position:", self.position_spinbox)
         layout.addWidget(self.button_box)
 
-    def get_values(self):
+    def get_index_value(self) -> int:
         return self.position_spinbox.value()
 
 
@@ -240,11 +248,13 @@ class PasswordDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Authentication required")
 
+        # Components
         self.password_input = QLineEdit()
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.accept)
 
+        # Layout
         layout = QFormLayout(self)
         layout.addRow("Password:", self.password_input)
         layout.addWidget(self.ok_button)

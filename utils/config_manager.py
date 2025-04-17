@@ -16,17 +16,14 @@ class ConfigManager:
         }
 
     def get(self, key):
-        """
-        Obtém o valor de uma configuração.
-        Se não existir, retorna o valor padrão definido no dicionário 'self.defaults'.
-        """
+        """Gets the value of a setting. If it does not exist, returns the default value defined in the [self.defaults] dictionary."""
         return self.settings.value(key, self.defaults.get(key))
 
     def set(self, key, value):
-        """Define um valor para uma configuração."""
+        """Sets a value for a setting."""
         self.settings.setValue(key, value)
 
     def list_configs(self):
-        """Lista todas as configurações armazenadas."""
+        """Lists all stored settings."""
         self.settings.sync()
         return {key: self.get(key) for key in self.defaults.keys()}

@@ -12,7 +12,8 @@ class MonitorWorker(QRunnable):
         self.paused = False
         self.running = True
 
-    def run(self):
+    def run(self) -> None:
+        """Emits the [update_output] signal every 100ms, as long as the worker is running."""
         while self.running:
             self.mutex.lock()
             while self.paused:
@@ -24,16 +25,19 @@ class MonitorWorker(QRunnable):
             self.signals.update_output.emit()
             sleep(0.1)
 
-    def pause(self):
+    def pause(self) -> None:
+        """Pauses the execution of the worker. The thread sleeps until [resume()] is called."""
         with QMutexLocker(self.mutex):
             self.paused = True
 
-    def resume(self):
+    def resume(self) -> None:
+        """Resumes thread execution if it was paused."""
         with QMutexLocker(self.mutex):
             self.paused = False
             self.wait_condition.wakeAll()
 
-    def stop(self):
+    def stop(self) -> None:
+        """Safely terminates the worker execution."""
         with QMutexLocker(self.mutex):
             self.running = False
             self.paused = False

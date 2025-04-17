@@ -10,7 +10,7 @@ from views.channel_monitor_view import ChannelMonitorView
 ICON_SIZE = QSize(20, 20)
 
 
-def set_label_status(label: QLabel, status_name: str):
+def update_label_object_name(label: QLabel, status_name: str) -> None:
     label.setObjectName(status_name)
     label.style().unpolish(label)
     label.style().polish(label)
@@ -45,59 +45,61 @@ class TestRunTabView(QWidget):
         # Signals
         self.run_button.clicked.connect(self.test_controller.start_test_sequence)
         self.stop_button.clicked.connect(self.test_controller.cancel_test_sequence)
-        self.serial_number_field.textChanged.connect(self.__set_serial_number)
-        self.tester_id_field.textChanged.connect(self.__set_tester_id)
-        self.test_controller.state_changed.connect(self.__update_status_label)
-        self.test_controller.serial_number_updated.connect(self.__update_serial_number_field)
-        self.test_controller.current_step_changed.connect(self.__set_step_info)
-        self.test_controller.delay_manager.remaining_time_changed.connect(self.__update_timer)
+        self.serial_number_field.textChanged.connect(self._set_serial_number)
+        self.tester_id_field.textChanged.connect(self._set_tester_id)
+        self.test_controller.state_changed.connect(self._update_status_label)
+        self.test_controller.serial_number_updated.connect(self._update_serial_number_field)
+        self.test_controller.current_step_changed.connect(self._set_step_info)
+        self.test_controller.delay_manager.remaining_time_changed.connect(self._update_timer)
 
         for channel_id in self.test_data.channels.keys():
             channel_monitor = ChannelMonitorView(channel_id)
             channel_monitor.setProperty("class", "channel_monitor")
             self.test_controller.channel_list.append(channel_monitor)
 
-        self.setLayout(self.__setup_layout())
+        self.setLayout(self._setup_layout())
 
     @Slot(int)
-    def __update_timer(self, remaining_time: int):
+    def _update_timer(self, remaining_time: int) -> None:
         self.timer_label.setText(f"{remaining_time / 1000}s")
 
     @Slot(str, float, int)
-    def __set_step_info(self, description: str, duration: float, index: int):
+    def _set_step_info(self, description: str, duration: float, index: int) -> None:
         self.current_step_label.setText(description)
         self.timer_label.setText(f"{duration}s")
         self.steps_progress_label.setText(f"{index + 1}/{len(self.test_data.steps)}")
 
     @Slot(str)
-    def __set_tester_id(self, value):
+    def _set_tester_id(self, value: str) -> None:
         self.test_controller.tester_id = value
 
     @Slot(str)
-    def __set_serial_number(self, value):
+    def _set_serial_number(self, value: str) -> None:
         self.test_controller.serial_number = value.zfill(8)
         self.test_controller.serial_number_needs_increment = False
 
     @Slot(str)
-    def __update_serial_number_field(self, value):
+    def _update_serial_number_field(self, value: str) -> None:
         self.serial_number_field.setText(value)
 
     @Slot(str)
-    def __update_status_label(self, value):
+    def _update_status_label(self, value: str) -> None:
+        """Updates the status label text and it's objectName attribute."""
         self.current_state_label.setText(value)
         match self.test_controller.state:
             case TestState.PASSED | TestState.RUNNING:
-                set_label_status(self.current_state_label, "label_green")
+                update_label_object_name(self.current_state_label, "label_green")
             case TestState.PAUSED | TestState.WAITKEY:
-                set_label_status(self.current_state_label, "label_orange")
+                update_label_object_name(self.current_state_label, "label_orange")
             case TestState.CANCELED | TestState.FAILED:
-                set_label_status(self.current_state_label, "label_red")
+                update_label_object_name(self.current_state_label, "label_red")
             case _:
-                set_label_status(self.current_state_label, "label_default")
+                update_label_object_name(self.current_state_label, "label_default")
 
-        self.__update_fields_state()
+        self._update_fields_state()
 
-    def __update_fields_state(self):
+    def _update_fields_state(self) -> None:
+        """Toggles the state of the buttons to match the state of the application"""
         state = self.test_controller.state
         if state is TestState.NONE:
             return
@@ -125,16 +127,15 @@ class TestRunTabView(QWidget):
 
         self.run_button.setFocus()
 
-    def __setup_layout(self) -> QHBoxLayout:
-
-        # ACTIONS
+    def _setup_layout(self) -> QHBoxLayout:
+        # Actions
         action_buttons = QWidget()
         action_buttons.setFixedHeight(70)
         h_buttons_layout = QHBoxLayout(action_buttons)
         h_buttons_layout.addWidget(self.run_button)
         h_buttons_layout.addWidget(self.stop_button)
 
-        # SETUP
+        # Setup
         test_setup_groupbox = QGroupBox("SETUP")
         test_setup_groupbox.setProperty("class", "left_panel_gb")
         test_setup_groupbox.setFixedWidth(450)
@@ -143,7 +144,7 @@ class TestRunTabView(QWidget):
         f_test_setup_layout.addRow("Tester : ", self.tester_id_field)
         f_test_setup_layout.addRow(action_buttons)
 
-        # INFO
+        # Info
         test_info_groupbox = QGroupBox("INFO")
         test_info_groupbox.setMaximumWidth(450)
         test_info_groupbox.setProperty("class", "left_panel_gb")
@@ -158,7 +159,7 @@ class TestRunTabView(QWidget):
         v_test_info_layout.addLayout(f_test_info_layout)
         v_test_info_layout.addLayout(h_timer_progress_layout)
 
-        # DETAILS
+        # Details
         test_details_groupbox = QGroupBox("DETAILS")
         test_details_groupbox.setMaximumWidth(450)
         test_details_groupbox.setProperty("class", "left_panel_gb")
@@ -168,23 +169,24 @@ class TestRunTabView(QWidget):
         f_test_details_layout.addRow("Customer:", self.customer_label)
         f_test_details_layout.addRow("Input Type:", self.input_type_label)
 
-        # LEFT PANEL
+        # Left Panel
         v_left_panel_layout = QVBoxLayout()
         v_left_panel_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         v_left_panel_layout.addWidget(test_setup_groupbox)
         v_left_panel_layout.addWidget(test_info_groupbox)
         v_left_panel_layout.addWidget(test_details_groupbox)
 
-        # RIGHT PANEL
+        # Right Panel
         g_right_panel_layout = QGridLayout()
         g_right_panel_layout.setSpacing(20)
         g_right_panel_layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight)
-        column = 2
+        columns = 2
         for i, channel in enumerate(self.test_controller.channel_list):
-            g_right_panel_layout.addWidget(channel, i // column, i % column)
+            g_right_panel_layout.addWidget(channel, i // columns, i % columns)
 
-        # MAIN LAYOUT
+        # Main Layout
         h_main_layout = QHBoxLayout()
         h_main_layout.addLayout(v_left_panel_layout)
         h_main_layout.addLayout(g_right_panel_layout)
+
         return h_main_layout

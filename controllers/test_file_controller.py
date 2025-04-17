@@ -9,6 +9,7 @@ from utils.constants import AVAILABLE_CHANNELS
 
 
 def gen_id() -> int:
+    """Generates a time based ID."""
     return int(time.time() * 1000)
 
 
@@ -21,7 +22,8 @@ class TestFileController:
         self.params = []
         self.steps = []
 
-    def load_file_data(self, file_path: str):
+    def load_file_data(self, file_path: str) -> None:
+        """Loads the [self.test_data] with the editing test file data."""
         with open(file_path, "r", encoding="utf-8") as file:
             data = yaml.safe_load(file)
         self.test_data = TestData(**data)
@@ -34,6 +36,7 @@ class TestFileController:
         self.input_sources = self.test_data.input_sources
 
     def save_data(self, directory_path: str, is_editing: bool = False) -> str:
+        """Creates the new test file or overwrites if [is_editing]."""
         self.test_data.input_sources = [int(value) if value != '' else 0 for value in self.input_sources]
         self.test_data.channels = self.active_channels
         self.test_data.params = self.params
@@ -46,22 +49,22 @@ class TestFileController:
 
         return f"File saved in: {file_path}"
 
-    def get_step(self, step_id: int):
+    def get_step(self, step_id: int) -> dict:
         return next((step for step in self.steps if step["id"] == step_id))
 
-    def add_step(self, step_data: dict):
+    def add_step(self, step_data: dict) -> None:
         self.steps.append({"id": gen_id(), **step_data})
 
-    def remove_step(self, step_id: int):
+    def remove_step(self, step_id: int) -> None:
         self.steps.remove(self.get_step(step_id))
 
-    def clone_step(self, step_id: int):
+    def clone_step(self, step_id: int) -> None:
         step = self.get_step(step_id)
         new_step = step.copy()
         new_step.update({"id": gen_id()})
         self.steps.append(new_step)
 
-    def move_step(self, step_id: int, new_index: int):
+    def move_step(self, step_id: int, new_index: int) -> None:
         index = self.steps.index(self.get_step(step_id))
         step = self.steps.pop(index)
         self.steps.insert(new_index - 1, step)
@@ -73,22 +76,22 @@ class TestFileController:
 
         return True in checked_steps
 
-    def remove_channel(self, channel_id: int):
+    def remove_channel(self, channel_id: int) -> None:
         self.active_channels.pop(channel_id)
 
-    def get_available_channels(self):
+    def get_available_channels(self) -> list:
         return [channel_id for channel_id in AVAILABLE_CHANNELS if channel_id not in self.active_channels.keys()]
 
-    def get_param(self, param_id: int):
+    def get_param(self, param_id: int) -> dict:
         return next((param for param in self.params if param['id'] == param_id))
 
-    def add_param(self, data: dict):
+    def add_param(self, data: dict) -> None:
         self.params.append({"id": gen_id(), **data})
 
-    def remove_param(self, param_id: int):
+    def remove_param(self, param_id: int) -> None:
         self.params.remove(self.get_param(param_id))
 
-    def clone_param(self, param_id: int):
+    def clone_param(self, param_id: int) -> None:
         param = self.get_param(param_id)
         new_param = param.copy()
         new_param.update({"id": gen_id()})

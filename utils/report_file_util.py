@@ -3,6 +3,7 @@ from datetime import datetime
 
 
 def generate_report_file(data: dict):
+    """Generates a temporary file using [data] values on the test result pattern."""
     temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w", encoding="utf-8")
 
     divider = "|" + "=" * 67 + "|\n"

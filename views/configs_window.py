@@ -21,6 +21,9 @@ class ConfigWindow(QWidget):
 
         self.changes = {}
         self.pins_setup = [(0, "CA"), (1, "CA"), (2, "CA"), (0, "CC"), (1, "CC"), (2, "CC")]
+        self.pins_combobox_text = ["Pino 4: CA1", "Pino 5: CA2", "Pino 6: CA3", "Pino 7: CC1", "Pino 8: CC2",
+                                   "Pino 9: CC3",
+                                   "Pino 10: Buzzer"]
 
         # Components
         self.test_files_dir_field = QLineEdit(self.config.get(TEST_FILES_DIR))
@@ -36,43 +39,39 @@ class ConfigWindow(QWidget):
         self.apply_changes_button = QPushButton(text="Apply", icon=QIcon("assets/icons/check.svg"))
         self.apply_changes_button.setEnabled(False)
         self.arduino_pins_combobox = QComboBox()
-        self.arduino_pins_combobox.addItems(
-            ["Pino 4: CA1", "Pino 5: CA2", "Pino 6: CA3", "Pino 7: CC1", "Pino 8: CC2", "Pino 9: CC3",
-             "Pino 10: Buzzer"])
+        self.arduino_pins_combobox.addItems(self.pins_combobox_text)
         self.test_pin_button = QPushButton(text="Test Pin", icon=QIcon("assets/icons/switch.svg"))
 
         # Signals
-        self.test_files_dir_field.textChanged.connect(lambda value: self.set_changed_fields(TEST_FILES_DIR, value))
+        self.test_files_dir_field.textChanged.connect(lambda value: self._set_changed_fields(TEST_FILES_DIR, value))
         self.sat_resource_path_field.textChanged.connect(
-            lambda value: self.set_changed_fields(SAT_RESOURCE_PATH, value))
+            lambda value: self._set_changed_fields(SAT_RESOURCE_PATH, value))
         self.arduino_resource_path_field.textChanged.connect(
-            lambda value: self.set_changed_fields(ARDUINO_RESOURCE_PATH, value))
+            lambda value: self._set_changed_fields(ARDUINO_RESOURCE_PATH, value))
         self.arduino_serial_port_field.textChanged.connect(
-            lambda value: self.set_changed_fields(ARDUINO_SERIAL_PORT, value))
-        self.sat_baud_rate_field.valueChanged.connect(lambda value: self.set_changed_fields(SAT_BAUD_RATE, value))
+            lambda value: self._set_changed_fields(ARDUINO_SERIAL_PORT, value))
+        self.sat_baud_rate_field.valueChanged.connect(lambda value: self._set_changed_fields(SAT_BAUD_RATE, value))
         self.arduino_baud_rate_field.valueChanged.connect(
-            lambda value: self.set_changed_fields(ARDUINO_BAUD_RATE, value))
-        self.apply_changes_button.clicked.connect(self.apply_changes)
-        self.test_pin_button.clicked.connect(self.__test_arduino_pin)
+            lambda value: self._set_changed_fields(ARDUINO_BAUD_RATE, value))
+        self.apply_changes_button.clicked.connect(self._apply_changes)
+        self.test_pin_button.clicked.connect(self._test_arduino_pin)
 
-        self.setLayout(self.__setup_layout())
+        self.setLayout(self._setup_layout())
 
-    def __setup_layout(self) -> QVBoxLayout:
+    def _setup_layout(self) -> QVBoxLayout:
         global_config_gb = QGroupBox("Global")
         sat_config_gb = QGroupBox("SAT")
         arduino_config_gb = QGroupBox("Arduino")
 
-        v_global_config_layout = QVBoxLayout()
+        v_global_config_layout = QVBoxLayout(global_config_gb)
         v_global_config_layout.addWidget(QLabel("Test Files Directory:"))
         v_global_config_layout.addWidget(self.test_files_dir_field)
-        global_config_gb.setLayout(v_global_config_layout)
 
-        v_sat_config_layout = QVBoxLayout()
+        v_sat_config_layout = QVBoxLayout(sat_config_gb)
         v_sat_config_layout.addWidget(QLabel("Resource Path:"))
         v_sat_config_layout.addWidget(self.sat_resource_path_field)
         v_sat_config_layout.addWidget(QLabel("Baud Rate:"))
         v_sat_config_layout.addWidget(self.sat_baud_rate_field)
-        sat_config_gb.setLayout(v_sat_config_layout)
 
         g_arduino_config_layout = QGridLayout(arduino_config_gb)
         g_arduino_config_layout.addWidget(QLabel("Resource Path:"), 0, 0, 1, 6)
@@ -95,7 +94,8 @@ class ConfigWindow(QWidget):
 
         return v_main_layout
 
-    def __test_arduino_pin(self):
+    def _test_arduino_pin(self) -> None:
+        """Tests the selected arduino pin."""
         selected_index = self.arduino_pins_combobox.currentIndex()
         if selected_index == 6:
             self.arduino_controller.buzzer()
@@ -103,11 +103,11 @@ class ConfigWindow(QWidget):
             input_source, input_type = self.pins_setup[selected_index]
             self.arduino_controller.set_input_source(input_source, input_type)
 
-    def set_changed_fields(self, key: str, value):
+    def _set_changed_fields(self, key: str, value) -> None:
         self.changes.update({key: value})
         self.apply_changes_button.setEnabled(True)
 
-    def apply_changes(self):
+    def _apply_changes(self) -> None:
         for key, value in self.changes.items():
             self.config.set(key, value)
         self.apply_changes_button.setEnabled(False)

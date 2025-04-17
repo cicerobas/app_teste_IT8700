@@ -36,6 +36,7 @@ def custom_groupbox(title: str, max_width: int | None = None) -> QGroupBox:
 
 
 def get_selected_item_id(data_widget) -> int | None:
+    """If there is an item selected in [data_widget], returns its ID."""
     if isinstance(data_widget, QListWidget):
         item = data_widget.currentItem()
         if item:
@@ -75,8 +76,7 @@ class CreateTestWindow(QWidget):
         self.channel_list_widget = QListWidget()
         self.step_list_widget = QListWidget()
         self.params_table = QTableWidget()
-        self.__setup_params_table()
-
+        self._setup_params_table()
         self.channel_list_widget.setProperty("class", "custom_list")
         self.step_list_widget.setProperty("class", "custom_list")
         ## Buttons
@@ -96,29 +96,30 @@ class CreateTestWindow(QWidget):
         self.remove_param_bt = custom_icon_button("minus.svg")
 
         # Signals
-        self.save_data_bt.clicked.connect(self.__save_test_data)
-        self.clear_data_bt.clicked.connect(self.__clear_fields)
-        self.add_channel_bt.clicked.connect(self.__show_channel_setup_dialog)
-        self.add_step_bt.clicked.connect(self.__show_step_setup_dialog)
-        self.edit_channel_bt.clicked.connect(lambda: self.__show_channel_setup_dialog(True))
-        self.edit_param_bt.clicked.connect(lambda: self.__show_param_setup_dialog(True))
-        self.edit_step_bt.clicked.connect(lambda: self.__show_step_setup_dialog(True))
-        self.clone_param_bt.clicked.connect(self.__clone_param)
-        self.clone_step_bt.clicked.connect(self.__clone_step)
-        self.move_step_bt.clicked.connect(self.__move_step)
-        self.remove_channel_bt.clicked.connect(self.__remove_channel)
-        self.remove_param_bt.clicked.connect(self.__remove_param)
-        self.remove_step_bt.clicked.connect(self.__remove_step)
-        self.add_param_bt.clicked.connect(self.__show_param_setup_dialog)
+        self.save_data_bt.clicked.connect(self._save_test_data)
+        self.clear_data_bt.clicked.connect(self._clear_fields)
+        self.add_channel_bt.clicked.connect(self._show_channel_setup_dialog)
+        self.add_step_bt.clicked.connect(self._show_step_setup_dialog)
+        self.edit_channel_bt.clicked.connect(lambda: self._show_channel_setup_dialog(True))
+        self.edit_param_bt.clicked.connect(lambda: self._show_param_setup_dialog(True))
+        self.edit_step_bt.clicked.connect(lambda: self._show_step_setup_dialog(True))
+        self.clone_param_bt.clicked.connect(self._clone_param)
+        self.clone_step_bt.clicked.connect(self._clone_step)
+        self.move_step_bt.clicked.connect(self._move_step)
+        self.remove_channel_bt.clicked.connect(self._remove_channel)
+        self.remove_param_bt.clicked.connect(self._remove_param)
+        self.remove_step_bt.clicked.connect(self._remove_step)
+        self.add_param_bt.clicked.connect(self._show_param_setup_dialog)
 
         if self.is_editing:
             self.test_file_controller.load_file_data(self.editing_file_path)
-            self.__set_editing_field_values()
+            self._set_editing_field_values()
 
         # Layout
-        self.setLayout(self.__setup_layout())
+        self.setLayout(self._setup_layout())
 
-    def __setup_params_table(self):
+    def _setup_params_table(self) -> None:
+        """Configures the [params_table] structure."""
         self.params_table.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.params_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.params_table.setColumnCount(5)
@@ -129,7 +130,8 @@ class CreateTestWindow(QWidget):
         for col in range(1, self.params_table.columnCount()):
             self.params_table.horizontalHeader().setSectionResizeMode(col, QHeaderView.ResizeMode.Stretch)
 
-    def __set_editing_field_values(self):
+    def _set_editing_field_values(self) -> None:
+        """Sets the fields values in editing mode."""
         self.group_field.setText(self.test_file_controller.test_data.group)
         self.model_field.setText(self.test_file_controller.test_data.model)
         self.customer_field.setText(self.test_file_controller.test_data.customer)
@@ -137,11 +139,12 @@ class CreateTestWindow(QWidget):
         self.v1_input_field.setText(str(self.test_file_controller.test_data.input_sources[0]))
         self.v2_input_field.setText(str(self.test_file_controller.test_data.input_sources[1]))
         self.v3_input_field.setText(str(self.test_file_controller.test_data.input_sources[2]))
-        self.__update_channels_list()
-        self.__update_params_table()
-        self.__update_steps_list()
+        self._update_channels_list()
+        self._update_params_table()
+        self._update_steps_list()
 
-    def __save_test_data(self):
+    def _save_test_data(self) -> None:
+        """Shows a dialog to select the destination folder and saves the test file."""
         if self.group_field.text() == "":
             show_custom_dialog("The GROUP field is required.", QMessageBox.Icon.Critical)
         elif self.step_list_widget.count() == 0:
@@ -165,7 +168,8 @@ class CreateTestWindow(QWidget):
                     show_custom_dialog(confirmation, QMessageBox.Icon.Information)
                     self.close()
 
-    def __clear_fields(self):
+    def _clear_fields(self) -> None:
+        """Clears all fields and lists depending on [confirmation]."""
         confirmation = QMessageBox.question(
             self,
             "Confirm Action",
@@ -183,14 +187,15 @@ class CreateTestWindow(QWidget):
             self.v2_input_field.setText("")
             self.v3_input_field.setText("")
             self.test_file_controller = TestFileController()
-            self.__update_channels_list()
-            self.__update_params_table()
-            self.__update_steps_list()
+            self._update_channels_list()
+            self._update_params_table()
+            self._update_steps_list()
 
-    def __show_step_setup_dialog(self, edit: bool = False):
+    def _show_step_setup_dialog(self, is_editing: bool = False) -> None:
+        """Shows the [StepSetupDialog] with configuration based on [is_editing]."""
         input_sources = [self.v1_input_field.text(), self.v2_input_field.text(), self.v3_input_field.text()]
         input_type = self.input_type_field.currentText()
-        if edit:
+        if is_editing:
             step_id = get_selected_item_id(self.step_list_widget)
             if step_id:
                 step = self.test_file_controller.get_step(step_id)
@@ -198,7 +203,7 @@ class CreateTestWindow(QWidget):
                                          self.test_file_controller.params, step, self)
                 if dialog.exec():
                     step.update(dialog.get_values())
-                    self.__update_steps_list()
+                    self._update_steps_list()
         else:
             if self.channel_list_widget.count() == 0:
                 show_custom_dialog("Cannot add STEP: Channels setup list is empty.", QMessageBox.Icon.Warning)
@@ -209,27 +214,29 @@ class CreateTestWindow(QWidget):
                                          self.test_file_controller.params, None, self)
                 if dialog.exec():
                     self.test_file_controller.add_step(dialog.get_values())
-                    self.__update_steps_list()
+                    self._update_steps_list()
 
-    def __show_param_setup_dialog(self, edit: bool = False):
-        if edit:
+    def _show_param_setup_dialog(self, is_editing: bool = False) -> None:
+        """Shows the [ParamsSetupDialog] with configuration based on [is_editing]."""
+        if is_editing:
             param_id = get_selected_item_id(self.params_table)
             if param_id:
                 param = self.test_file_controller.get_param(param_id)
                 dialog = ParamsSetupDialog(param, self)
                 if dialog.exec():
                     param.update(dialog.get_values())
-                    self.__update_params_table()
+                    self._update_params_table()
         else:
             dialog = ParamsSetupDialog(None, self)
             if dialog.exec():
                 self.test_file_controller.add_param(dialog.get_values())
-                self.__update_params_table()
-                self.__update_params_table()
+                self._update_params_table()
+                self._update_params_table()
 
-    def __show_channel_setup_dialog(self, edit: bool = False):
+    def _show_channel_setup_dialog(self, is_editing: bool = False) -> None:
+        """Shows the [ChannelSetupDialog] with configuration based on [is_editing]."""
         channels = self.test_file_controller.get_available_channels()
-        if edit:
+        if is_editing:
             channel_id = get_selected_item_id(self.channel_list_widget)
             if channel_id:
                 label = self.test_file_controller.active_channels.get(channel_id)
@@ -241,33 +248,37 @@ class CreateTestWindow(QWidget):
 
         if dialog.exec():
             self.test_file_controller.active_channels.update(dialog.get_values())
-            self.__update_channels_list()
+            self._update_channels_list()
 
-    def __move_step(self):
+    def _move_step(self) -> None:
+        """Moves the selected step to the new index."""
         step_id = get_selected_item_id(self.step_list_widget)
         if step_id:
             index = self.step_list_widget.currentIndex().row() + 1
             list_length = self.step_list_widget.count()
             dialog = StepPositionDialog(index, list_length)
             if dialog.exec():
-                new_index = dialog.get_values()
+                new_index = dialog.get_index_value()
                 if new_index != index:
                     self.test_file_controller.move_step(step_id, new_index)
-                    self.__update_steps_list()
+                    self._update_steps_list()
 
-    def __clone_step(self):
+    def _clone_step(self) -> None:
+        """Creates a copy of the selected step."""
         step_id = get_selected_item_id(self.step_list_widget)
         if step_id:
             self.test_file_controller.clone_step(step_id)
-            self.__update_steps_list()
+            self._update_steps_list()
 
-    def __clone_param(self):
+    def _clone_param(self) -> None:
+        """Creates a copy of the selected parameter."""
         param_id = get_selected_item_id(self.params_table)
         if param_id:
             self.test_file_controller.clone_param(param_id)
-            self.__update_params_table()
+            self._update_params_table()
 
-    def __remove_param(self):
+    def _remove_param(self) -> None:
+        """Removes the selected param if it's not used in any step."""
         param_id = get_selected_item_id(self.params_table)
         if param_id:
             if self.test_file_controller.check_param_in_steps(param_id):
@@ -275,31 +286,33 @@ class CreateTestWindow(QWidget):
                                    QMessageBox.Icon.Warning)
             else:
                 self.test_file_controller.remove_param(param_id)
-                self.__update_params_table()
+                self._update_params_table()
 
-    def __remove_channel(self):
+    def _remove_channel(self) -> None:
+        """Removes the selected channel if it's not used in any step."""
         if self.step_list_widget.count() != 0:
             show_custom_dialog("Cannot be removed: Step list is not empty.", QMessageBox.Icon.Warning)
         else:
             channel_id = get_selected_item_id(self.channel_list_widget)
             if channel_id:
                 self.test_file_controller.remove_channel(channel_id)
-                self.__update_channels_list()
+                self._update_channels_list()
 
-    def __remove_step(self):
+    def _remove_step(self) -> None:
+        """Removes the selected step."""
         step_id = get_selected_item_id(self.step_list_widget)
         if step_id:
             self.test_file_controller.remove_step(step_id)
-            self.__update_steps_list()
+            self._update_steps_list()
 
-    def __update_channels_list(self):
+    def _update_channels_list(self) -> None:
         self.channel_list_widget.clear()
         for channel_id, label in self.test_file_controller.active_channels.items():
             item = QListWidgetItem(f"{channel_id} : {label}")
             item.setData(Qt.ItemDataRole.UserRole, channel_id)
             self.channel_list_widget.addItem(item)
 
-    def __update_params_table(self):
+    def _update_params_table(self) -> None:
         self.params_table.setRowCount(0)
         self.params_table.setRowCount(len(self.test_file_controller.params))
         for row, param in enumerate(self.test_file_controller.params):
@@ -311,16 +324,14 @@ class CreateTestWindow(QWidget):
             self.params_table.setItem(row, 3, QTableWidgetItem(f"{param['ia']}"))
             self.params_table.setItem(row, 4, QTableWidgetItem(f"{param['ib']}"))
 
-    def __update_steps_list(self):
+    def _update_steps_list(self) -> None:
         self.step_list_widget.clear()
         for index, step in enumerate(self.test_file_controller.steps):
             item = QListWidgetItem(f"{index + 1} - {step['description']}")
             item.setData(Qt.ItemDataRole.UserRole, step['id'])
             self.step_list_widget.addItem(item)
 
-    def __setup_layout(self) -> QHBoxLayout:
-        h_main_layout = QHBoxLayout()
-
+    def _setup_layout(self) -> QHBoxLayout:
         test_details_groupbox = custom_groupbox("Test Details", 400)
         steps_groupbox = custom_groupbox("Steps")
         params_groupbox = custom_groupbox("Parameters", 400)
@@ -384,6 +395,7 @@ class CreateTestWindow(QWidget):
         v_params_container_layout.addWidget(self.params_table)
 
         # Main
+        h_main_layout = QHBoxLayout()
         h_main_layout.addWidget(test_details_groupbox)
         h_main_layout.addWidget(steps_groupbox)
         h_main_layout.addWidget(params_groupbox)
