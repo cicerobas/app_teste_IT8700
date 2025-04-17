@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QGroupBox, QLin
 
 from controllers.test_controller import TestController, TestState
 from models.test_file_model import TestData
+from utils.assets_path_util import resource_path
 from views.channel_monitor_view import ChannelMonitorView
 
 ICON_SIZE = QSize(20, 20)
@@ -27,8 +28,8 @@ class TestRunTabView(QWidget):
         self.serial_number_field = QLineEdit()
         self.serial_number_field.setValidator(QIntValidator(0, 99999999, self))
         self.tester_id_field = QLineEdit()
-        self.run_button = QPushButton(icon=QIcon('assets/icons/play.svg'), text=" RUN", parent=self)
-        self.stop_button = QPushButton(icon=QIcon('assets/icons/stop.svg'), text=" STOP", parent=self)
+        self.run_button = QPushButton(icon=QIcon(resource_path("assets/icons/play.svg")), text=" RUN", parent=self)
+        self.stop_button = QPushButton(icon=QIcon(resource_path("assets/icons/stop.svg")), text=" STOP", parent=self)
         self.run_button.setIconSize(ICON_SIZE)
         self.stop_button.setIconSize(ICON_SIZE)
         self.current_state_label = QLabel("")
@@ -108,19 +109,19 @@ class TestRunTabView(QWidget):
         self.tester_id_field.setReadOnly(True)
         if state in [TestState.RUNNING, TestState.PAUSED]:
             self.run_button.setIcon(
-                QIcon('assets/icons/pause.svg') if state is TestState.RUNNING else QIcon('assets/icons/play.svg'))
+                QIcon(resource_path("assets/icons/pause.svg")) if state is TestState.RUNNING else QIcon(resource_path("assets/icons/play.svg")))
             self.run_button.setText(" PAUSE" if state is TestState.RUNNING else " CONTINUE")
             self.run_button.clicked.disconnect()
             self.run_button.clicked.connect(self.test_controller.toggle_test_pause_state)
         elif state is TestState.WAITKEY:
-            self.run_button.setIcon(QIcon('assets/icons/play.svg'))
+            self.run_button.setIcon(QIcon(resource_path("assets/icons/play.svg")))
             self.run_button.setText(" CONTINUE")
             self.run_button.clicked.disconnect()
             self.run_button.clicked.connect(self.test_controller.continue_sequence)
         else:
             self.serial_number_field.setReadOnly(False)
             self.tester_id_field.setReadOnly(False)
-            self.run_button.setIcon(QIcon('assets/icons/play.svg'))
+            self.run_button.setIcon(QIcon(resource_path("assets/icons/play.svg")))
             self.run_button.setText(" RUN")
             self.run_button.clicked.disconnect()
             self.run_button.clicked.connect(self.test_controller.start_test_sequence)

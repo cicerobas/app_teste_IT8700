@@ -8,6 +8,7 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QGridLayout, QFileDialog, QMessageBox
 
 from models.test_file_model import TestData
+from utils.assets_path_util import resource_path
 from utils.config_manager import ConfigManager
 from utils.constants import TEST_FILES_DIR
 from utils.window_utils import center_window
@@ -40,7 +41,7 @@ class MainWindow(QWidget):
         # Components
         ## Logo
         self.logo = QLabel()
-        self.logo.setPixmap(QPixmap("assets/logo.png"))
+        self.logo.setPixmap(QPixmap(resource_path("assets/logo.png")))
         self.logo.setScaledContents(True)
         self.logo.setFixedSize(QSize(300, 200))
         ## Buttons

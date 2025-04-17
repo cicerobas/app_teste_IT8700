@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QListWidget, QFormLayout, QL
 
 from controllers.test_controller import TestController
 from models.test_file_model import Step, TestData
+from utils.assets_path_util import resource_path
 from utils.constants import STEP_TYPES_MAP
 
 
@@ -78,7 +79,7 @@ class StepsTabView(QWidget):
         step_item.setData(Qt.ItemDataRole.UserRole, step.id)
         step_item_widget = QWidget()
         run_step_button = QPushButton(" RUN")
-        run_step_button.setIcon(QIcon('assets/icons/play.svg'))
+        run_step_button.setIcon(QIcon(resource_path("assets/icons/play.svg")))
         run_step_button.clicked.connect(lambda _: self.test_controller.setup_single_run(step.id))
         step_item_layout = QHBoxLayout(step_item_widget)
         step_item_layout.addWidget(QLabel(step.description))

@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QWidget, QLineEdit, QComboBox, QGroupBox, QHBoxLay
     QAbstractItemView, QHeaderView
 
 from controllers.test_file_controller import TestFileController
+from utils.assets_path_util import resource_path
 from utils.config_manager import ConfigManager
 from utils.constants import TEST_FILES_DIR
 from utils.window_utils import show_custom_dialog
@@ -20,7 +21,7 @@ def custom_separator(vertical: bool = False) -> QFrame:
 
 
 def custom_icon_button(icon: str, text: str = "", size: tuple[int, int] = (20, 20)) -> QPushButton:
-    button = QPushButton(text=text, icon=QIcon(f"assets/icons/{icon}"))
+    button = QPushButton(text=text, icon=QIcon(resource_path(f"assets/icons/{icon}")))
     width, height = size
     button.setIconSize(QSize(width, height))
     return button

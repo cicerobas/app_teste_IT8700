@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QWidget, QLineEdit, QSpinBox, QVBoxLayout, QGroupB
     QComboBox
 
 from controllers.arduino_controller import ArduinoController
+from utils.assets_path_util import resource_path
 from utils.config_manager import ConfigManager
 from utils.constants import *
 from utils.window_utils import center_window
@@ -36,11 +37,11 @@ class ConfigWindow(QWidget):
         self.arduino_baud_rate_field.setRange(0, 115200)
         self.sat_baud_rate_field.setValue(self.config.get(SAT_BAUD_RATE))
         self.arduino_baud_rate_field.setValue(self.config.get(ARDUINO_BAUD_RATE))
-        self.apply_changes_button = QPushButton(text="Apply", icon=QIcon("assets/icons/check.svg"))
+        self.apply_changes_button = QPushButton(text="Apply", icon=QIcon(resource_path("assets/icons/check.svg")))
         self.apply_changes_button.setEnabled(False)
         self.arduino_pins_combobox = QComboBox()
         self.arduino_pins_combobox.addItems(self.pins_combobox_text)
-        self.test_pin_button = QPushButton(text="Test Pin", icon=QIcon("assets/icons/switch.svg"))
+        self.test_pin_button = QPushButton(text="Test Pin", icon=QIcon(resource_path("assets/icons/switch.svg")))
 
         # Signals
         self.test_files_dir_field.textChanged.connect(lambda value: self._set_changed_fields(TEST_FILES_DIR, value))
