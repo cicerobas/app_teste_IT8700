@@ -5,13 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="555fd9b4-b0fb-4e5e-a58c-0fd6716abb63" name="Changes" comment="-">
-      <change afterPath="$PROJECT_DIR$/utils/assets_path_util.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/views/configs_window.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/configs_window.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/views/create_test_window.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/create_test_window.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/views/main_window.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/main_window.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/views/steps_tab_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/steps_tab_view.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/views/test_run_tab_view.py" beforeDir="false" afterPath="$PROJECT_DIR$/views/test_run_tab_view.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/style.qss" beforeDir="false" afterPath="$PROJECT_DIR$/assets/style.qss" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,7 +63,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "deletionFromPopupRequiresConfirmation": "false",
-    "git-widget-placeholder": "develop",
+    "git-widget-placeholder": "teste/build",
     "last_opened_file_path": "/home/cebra/PycharmProjects/app_teste_IT8700/utils",
     "settings.editor.selected.configurable": "preferences.pluginManager"
   }
@@ -81,6 +77,7 @@
       <recent name="$PROJECT_DIR$/assets" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/assets" />
       <recent name="$PROJECT_DIR$/assets/icons" />
     </key>
   </component>

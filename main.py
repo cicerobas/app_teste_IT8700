@@ -14,7 +14,7 @@ def load_stylesheet(file_path: str):
 
 def main():
     app = QApplication(sys.argv)
-    app.setStyleSheet(load_stylesheet("style.qss"))
+    app.setStyleSheet(load_stylesheet("assets/style.qss"))
     main_window = MainWindow()
     main_window.show()
 
